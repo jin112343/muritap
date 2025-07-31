@@ -7,6 +7,8 @@ import '../config/theme_config.dart';
 import '../services/data_service.dart';
 import '../services/ad_service.dart';
 import '../services/game_center_service.dart';
+import '../services/title_service.dart';
+import '../services/stats_service.dart';
 import '../widgets/tap_button.dart';
 
 /// ホーム画面
@@ -49,6 +51,8 @@ class HomeScreen extends HookWidget {
       duration: const Duration(milliseconds: 300),
       initialValue: 0.0,
     );
+    
+
 
     // 初期化時に広告を読み込み
     useEffect(() {
@@ -87,6 +91,9 @@ class HomeScreen extends HookWidget {
 
       // データを保存
       await DataService.instance.saveTotalTaps(newTotalTaps);
+      
+      // 統計データを記録
+      await StatsService.instance.recordTodayTaps(1);
 
       // レベルアップ判定
       if (DataService.instance.isLevelUp(newTotalTaps, currentLevel.value)) {
@@ -180,21 +187,59 @@ class HomeScreen extends HookWidget {
                     width: 1,
                   ),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                child: Column(
                   children: [
-                    Icon(
-                      Icons.flash_on,
-                      color: ThemeConfig.primaryColor,
-                      size: 24,
+                    // レベルと称号
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.flash_on,
+                          color: ThemeConfig.primaryColor,
+                          size: 24,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Lv.${currentLevel.value}',
+                          style: TextStyle(
+                            fontSize: 30,
+                            fontWeight: FontWeight.bold,
+                            color: ThemeConfig.primaryColor,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Lv.${currentLevel.value}',
-                      style: TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.bold,
-                        color: ThemeConfig.primaryColor,
+                    
+                    // 称号表示
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: TitleService.instance.getTitleColor(currentLevel.value).withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: TitleService.instance.getTitleColor(currentLevel.value),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            TitleService.instance.getTitleIcon(currentLevel.value),
+                            color: TitleService.instance.getTitleColor(currentLevel.value),
+                            size: 16,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            TitleService.instance.getTitle(currentLevel.value),
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: TitleService.instance.getTitleColor(currentLevel.value),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -262,6 +307,16 @@ class HomeScreen extends HookWidget {
                       backgroundColor: Colors.grey[800],
                       valueColor: AlwaysStoppedAnimation<Color>(ThemeConfig.primaryColor),
                       minHeight: 8,
+                    ),
+                    const SizedBox(height: 8),
+                    // 次のレベルまでの残りタップ数
+                    Text(
+                      'あと${DataService.instance.getRequiredTapsForLevel(currentLevel.value + 1) - totalTaps.value}回でレベルアップ！',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[400],
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ],
                 ),

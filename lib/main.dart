@@ -14,6 +14,7 @@ import 'screens/settings_screen.dart';
 
 // サービス
 import 'services/data_service.dart';
+import 'services/tracking_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,7 +25,25 @@ void main() async {
   // データサービスの初期化
   await DataService.instance.initialize();
   
+  // トラッキング許可の要求（iOS 14.5以降）
+  await _requestTrackingAuthorization();
+  
   runApp(const ImpossibleTapApp());
+}
+
+/// トラッキング許可を要求
+Future<void> _requestTrackingAuthorization() async {
+  try {
+    // トラッキング許可が必要かどうかを確認
+    final shouldRequest = await TrackingService.instance.shouldRequestTracking();
+    if (shouldRequest) {
+      // 許可を要求
+      final status = await TrackingService.instance.requestTrackingAuthorization();
+      debugPrint('Tracking authorization status: $status');
+    }
+  } catch (e) {
+    debugPrint('Error requesting tracking authorization: $e');
+  }
 }
 
 class ImpossibleTapApp extends HookWidget {

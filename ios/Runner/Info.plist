@@ -40,7 +40,7 @@
 	<key>NSUserDefaultsUsageDescription</key>
 	<string>このアプリでは、ゲームの進行状況を保存するためにデータを使用します。</string>
 	<key>NSUserTrackingUsageDescription</key>
-	<string>このアプリでは、より良い広告体験を提供するために広告識別子を使用します。</string>
+	<string>このアプリでは、より良い広告体験を提供するために広告識別子を使用します。この情報は広告の表示とパフォーマンス測定にのみ使用され、個人を特定する情報とは連携されません。</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UIBackgroundModes</key>

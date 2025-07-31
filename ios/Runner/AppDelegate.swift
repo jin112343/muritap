@@ -1,6 +1,7 @@
 import Flutter
 import UIKit
 import GameKit
+import AppTrackingTransparency
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
@@ -19,6 +20,16 @@ import GameKit
     
     gameCenterChannel.setMethodCallHandler { [weak self] (call, result) in
       self?.handleGameCenterMethod(call: call, result: result)
+    }
+    
+    // Tracking Service MethodChannel設定
+    let trackingChannel = FlutterMethodChannel(
+      name: "tracking_service",
+      binaryMessenger: controller.binaryMessenger
+    )
+    
+    trackingChannel.setMethodCallHandler { [weak self] (call, result) in
+      self?.handleTrackingMethod(call: call, result: result)
     }
     
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
@@ -236,6 +247,41 @@ import GameKit
     } else {
       // iOS 13.0未満の方式
       return UIApplication.shared.keyWindow?.rootViewController
+    }
+  }
+  
+  // MARK: - Tracking Service Methods
+  private func handleTrackingMethod(call: FlutterMethodCall, result: @escaping FlutterResult) {
+    switch call.method {
+    case "getTrackingStatus":
+      getTrackingStatus(result: result)
+      
+    case "requestTrackingAuthorization":
+      requestTrackingAuthorization(result: result)
+      
+    default:
+      result(FlutterMethodNotImplemented)
+    }
+  }
+  
+  private func getTrackingStatus(result: @escaping FlutterResult) {
+    if #available(iOS 14.5, *) {
+      let status = ATTrackingManager.trackingAuthorizationStatus
+      result(status.rawValue)
+    } else {
+      result(0) // notDetermined
+    }
+  }
+  
+  private func requestTrackingAuthorization(result: @escaping FlutterResult) {
+    if #available(iOS 14.5, *) {
+      ATTrackingManager.requestTrackingAuthorization { status in
+        DispatchQueue.main.async {
+          result(status.rawValue)
+        }
+      }
+    } else {
+      result(0) // notDetermined
     }
   }
 }

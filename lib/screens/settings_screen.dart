@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'dart:async';
 import '../config/app_config.dart';
 import '../config/theme_config.dart';
 import '../services/data_service.dart';
+import '../services/purchase_service.dart';
 import '../services/stats_service.dart';
 import '../widgets/stats_chart.dart';
 import 'webview_screen.dart';
@@ -15,13 +17,159 @@ class SettingsScreen extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 統計データをリアルタイムで監視
+    final totalTaps = useState(DataService.instance.getTotalTaps());
+    final currentLevel = useState(DataService.instance.getCurrentLevel());
+    final todayTaps = useState<int>(0);
+    final todayActualTaps = useState<int>(0);
+    
     final isLoading = useState(false);
     final weeklyStats = useState<List<DailyStats>>([]);
     final monthlyStats = useState<List<DailyStats>>([]);
     final isLoadingStats = useState(true);
-
+    final isPurchaseAvailable = useState(false);
+    
     // TabControllerを作成
     final tabController = useTabController(initialLength: 2);
+
+    // 統計データを定期的に更新
+    useEffect(() {
+      // 初期データを読み込み
+      StatsService.instance.getTodayTaps().then((value) {
+        todayTaps.value = value;
+      });
+      
+      StatsService.instance.getTodayActualTaps().then((value) {
+        todayActualTaps.value = value;
+      });
+      
+      // 統計データを初期読み込み
+      Future.wait([
+        StatsService.instance.getThisWeekStats(),
+        StatsService.instance.getLast30DaysStats(),
+      ]).then((results) {
+        weeklyStats.value = results[0];
+        monthlyStats.value = results[1];
+        isLoadingStats.value = false;
+      });
+      
+      // 初期データを強制更新
+      totalTaps.value = DataService.instance.getTotalTaps();
+      currentLevel.value = DataService.instance.getCurrentLevel();
+      
+      final timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        // 今日の統計データを非同期で更新
+        StatsService.instance.getTodayTaps().then((value) {
+          if (value != todayTaps.value) {
+            todayTaps.value = value;
+          }
+        });
+        
+        StatsService.instance.getTodayActualTaps().then((value) {
+          if (value != todayActualTaps.value) {
+            todayActualTaps.value = value;
+          }
+        });
+        
+        // 週間・月間統計を定期的に更新（10秒間隔）
+        if (timer.tick % 10 == 0) {
+          Future.wait([
+            StatsService.instance.getThisWeekStats(),
+            StatsService.instance.getLast30DaysStats(),
+          ]).then((results) {
+            weeklyStats.value = results[0];
+            monthlyStats.value = results[1];
+          });
+        }
+        
+        // 強制的にデータを更新（1秒間隔）
+        totalTaps.value = DataService.instance.getTotalTaps();
+        currentLevel.value = DataService.instance.getCurrentLevel();
+      });
+      
+      return timer.cancel;
+    }, []);
+
+    // 課金機能の状態を監視
+    useEffect(() {
+      final timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        isPurchaseAvailable.value = PurchaseService.instance.isAvailable;
+      });
+      
+      return () => timer.cancel();
+    }, []);
+
+    // 課金ボタンの処理
+    void onPurchase() async {
+      if (isPurchaseAvailable.value) {
+        // 課金画面を表示
+        if (context.mounted) {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('課金商品'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.block, color: Colors.orange),
+                    title: const Text('広告削除'),
+                    subtitle: const Text('100円 - すべての広告を非表示にします'),
+                    onTap: () async {
+                      Navigator.of(context).pop();
+                      // 実際の課金処理はここに実装
+                      print('広告削除を購入');
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.flash_on, color: Colors.yellow),
+                    title: const Text('1タップ10回'),
+                    subtitle: const Text('160円 - 1回のタップで10回分の効果'),
+                    onTap: () async {
+                      Navigator.of(context).pop();
+                      print('1タップ10回を購入');
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.bolt, color: Colors.orange),
+                    title: const Text('1タップ100回'),
+                    subtitle: const Text('300円 - 1回のタップで100回分の効果'),
+                    onTap: () async {
+                      Navigator.of(context).pop();
+                      print('1タップ100回を購入');
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.electric_bolt, color: Colors.red),
+                    title: const Text('1タップ1000回'),
+                    subtitle: const Text('3,000円 - 1回のタップで1000回分の効果'),
+                    onTap: () async {
+                      Navigator.of(context).pop();
+                      print('1タップ1000回を購入');
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('キャンセル'),
+                ),
+              ],
+            ),
+          );
+        }
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('課金機能が利用できません'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
 
     // 外部リンクを開く
     Future<void> openUrl(String url) async {
@@ -69,14 +217,6 @@ class SettingsScreen extends HookWidget {
 
     // 統計データを読み込み
     useEffect(() {
-      Future.wait([
-        StatsService.instance.getThisWeekStats(),
-        StatsService.instance.getLast30DaysStats(),
-      ]).then((results) {
-        weeklyStats.value = results[0];
-        monthlyStats.value = results[1];
-        isLoadingStats.value = false;
-      });
       return null;
     }, []);
 
@@ -148,7 +288,7 @@ class SettingsScreen extends HookWidget {
         controller: tabController,
         children: [
           // 設定タブ
-          Padding(
+          SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -174,6 +314,30 @@ class SettingsScreen extends HookWidget {
                         ),
                       ],
                     ),
+                  ),
+                ),
+                
+                const SizedBox(height: 16),
+                
+                // 課金セクション
+                Card(
+                  child: Column(
+                    children: [
+                      ListTile(
+                        leading: Icon(
+                          Icons.shopping_cart,
+                          color: isPurchaseAvailable.value 
+                            ? ThemeConfig.primaryColor 
+                            : Colors.grey,
+                        ),
+                        title: const Text('課金商品'),
+                        subtitle: const Text('広告削除やタップ倍率アップ'),
+                        onTap: onPurchase,
+                        trailing: isPurchaseAvailable.value 
+                          ? const Icon(Icons.arrow_forward_ios, size: 16)
+                          : const Icon(Icons.error_outline, color: Colors.grey, size: 16),
+                      ),
+                    ],
                   ),
                 ),
                 
@@ -246,7 +410,7 @@ class SettingsScreen extends HookWidget {
                   ),
                 ),
                 
-                const Spacer(),
+                const SizedBox(height: 32), // 下部に余白を追加
               ],
             ),
           ),
@@ -285,30 +449,25 @@ class SettingsScreen extends HookWidget {
                         const SizedBox(height: 16),
                         
                         // 今日のタップ数
-                        FutureBuilder<int>(
-                          future: StatsService.instance.getTodayTaps(),
-                          builder: (context, snapshot) {
-                            return Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  '今日のタップ数',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.grey[600],
-                                  ),
-                                ),
-                                Text(
-                                  '${snapshot.data ?? 0} 回',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: ThemeConfig.primaryColor,
-                                  ),
-                                ),
-                              ],
-                            );
-                          },
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              '今日の統計タップ数',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            Text(
+                              '${todayTaps.value} 回',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: ThemeConfig.primaryColor,
+                              ),
+                            ),
+                          ],
                         ),
                         
                         const SizedBox(height: 12),
@@ -325,7 +484,31 @@ class SettingsScreen extends HookWidget {
                               ),
                             ),
                             Text(
-                              '${DataService.instance.getTotalTaps()} 回',
+                              '${totalTaps.value} 回',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: ThemeConfig.primaryColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                        
+                        const SizedBox(height: 12),
+                        
+                        // 実際のタップ数（倍率なし）
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              '今日の実際のタップ数',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            Text(
+                              '${todayActualTaps.value} 回',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -349,7 +532,7 @@ class SettingsScreen extends HookWidget {
                               ),
                             ),
                             Text(
-                              'Lv.${DataService.instance.getCurrentLevel()}',
+                              'Lv.${currentLevel.value}',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,

@@ -33,12 +33,59 @@ class DataService {
     return _prefs!.getInt(AppConfig.keyTotalTaps) ?? 0;
   }
 
-  /// 累積タップ数を保存
-  Future<void> saveTotalTaps(int totalTaps) async {
-    if (!_isInitialized || _prefs == null) return;
+  /// 実際にカウントされた総数を取得（課金や動画再生分も含む）
+  /// これはGameCenterに送信するスコアとして使用される
+  int getActualCountedTaps() {
+    if (!_isInitialized || _prefs == null) return 0;
+    return _prefs!.getInt(AppConfig.keyTotalTaps) ?? 0;
+  }
+
+  /// 実際のタップ数（倍率なし）を取得
+  /// これはGameCenterに送信するスコアとして使用される
+  int getRealTapCount() {
+    if (!_isInitialized || _prefs == null) return 0;
+    return _prefs!.getInt('real_tap_count') ?? 0;
+  }
+
+  /// 実際のタップ数（倍率なし）を保存
+  Future<void> saveRealTapCount(int realTapCount) async {
+    if (!_isInitialized || _prefs == null) {
+      print('DataService: 初期化されていません');
+      return;
+    }
     
     try {
-      await _prefs!.setInt(AppConfig.keyTotalTaps, totalTaps);
+      print('DataService: 実際タップ数を保存開始 - $realTapCount');
+      final result = await _prefs!.setInt('real_tap_count', realTapCount);
+      print('DataService: 実際タップ数保存結果 - $result');
+      
+      // 保存後の確認
+      final savedValue = _prefs!.getInt('real_tap_count');
+      print('DataService: 保存後の確認 - $savedValue');
+      
+      print('DataService: 実際タップ数保存完了');
+    } catch (e) {
+      print('Error saving real tap count: $e');
+    }
+  }
+
+  /// 累積タップ数を保存
+  Future<void> saveTotalTaps(int totalTaps) async {
+    if (!_isInitialized || _prefs == null) {
+      print('DataService: 初期化されていません');
+      return;
+    }
+    
+    try {
+      print('DataService: 総タップ数を保存開始 - $totalTaps');
+      final result = await _prefs!.setInt(AppConfig.keyTotalTaps, totalTaps);
+      print('DataService: 総タップ数保存結果 - $result');
+      
+      // 保存後の確認
+      final savedValue = _prefs!.getInt(AppConfig.keyTotalTaps);
+      print('DataService: 保存後の確認 - $savedValue');
+      
+      print('DataService: 総タップ数保存完了');
     } catch (e) {
       print('Error saving total taps: $e');
     }

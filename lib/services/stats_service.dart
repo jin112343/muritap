@@ -15,8 +15,8 @@ class StatsService {
     return '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
   }
 
-  /// 今日のタップ数を記録
-  Future<void> recordTodayTaps(int taps) async {
+  /// 今日のタップ数を記録（実際のタップ数）
+  Future<void> recordTodayTaps(int actualTaps) async {
     final prefs = await SharedPreferences.getInstance();
     final todayKey = _getTodayKey();
     
@@ -24,11 +24,37 @@ class StatsService {
     final dailyStatsJson = prefs.getString(_dailyStatsKey) ?? '{}';
     final dailyStats = Map<String, dynamic>.from(jsonDecode(dailyStatsJson));
     
-    // 今日のタップ数を更新
-    dailyStats[todayKey] = (dailyStats[todayKey] ?? 0) + taps;
+    // 今日のタップ数を更新（実際のタップ数）
+    final currentTaps = dailyStats[todayKey] ?? 0;
+    final newTaps = currentTaps + actualTaps;
+    dailyStats[todayKey] = newTaps;
+    
+    print('StatsService: 今日の統計タップ数を記録 - 現在=$currentTaps, 追加=$actualTaps, 新しい総数=$newTaps');
     
     // 保存
     await prefs.setString(_dailyStatsKey, jsonEncode(dailyStats));
+    print('StatsService: 統計データ保存完了');
+  }
+
+  /// 今日の実際のタップ数を記録（倍率なし）
+  Future<void> recordTodayActualTaps(int actualTaps) async {
+    final prefs = await SharedPreferences.getInstance();
+    final todayKey = _getTodayKey() + '_actual';
+    
+    // 既存のデータを取得
+    final dailyStatsJson = prefs.getString(_dailyStatsKey) ?? '{}';
+    final dailyStats = Map<String, dynamic>.from(jsonDecode(dailyStatsJson));
+    
+    // 今日の実際のタップ数を更新（倍率なし）
+    final currentTaps = dailyStats[todayKey] ?? 0;
+    final newTaps = currentTaps + actualTaps;
+    dailyStats[todayKey] = newTaps;
+    
+    print('StatsService: 今日の実際タップ数を記録 - 現在=$currentTaps, 追加=$actualTaps, 新しい総数=$newTaps');
+    
+    // 保存
+    await prefs.setString(_dailyStatsKey, jsonEncode(dailyStats));
+    print('StatsService: 実際タップ数統計保存完了');
   }
 
   /// 過去7日間の統計を取得（月曜日から始まる週）
@@ -131,6 +157,16 @@ class StatsService {
   Future<int> getTodayTaps() async {
     final prefs = await SharedPreferences.getInstance();
     final todayKey = _getTodayKey();
+    final dailyStatsJson = prefs.getString(_dailyStatsKey) ?? '{}';
+    final dailyStats = Map<String, dynamic>.from(jsonDecode(dailyStatsJson));
+    
+    return dailyStats[todayKey] ?? 0;
+  }
+
+  /// 今日の実際のタップ数を取得（倍率なし）
+  Future<int> getTodayActualTaps() async {
+    final prefs = await SharedPreferences.getInstance();
+    final todayKey = _getTodayKey() + '_actual';
     final dailyStatsJson = prefs.getString(_dailyStatsKey) ?? '{}';
     final dailyStats = Map<String, dynamic>.from(jsonDecode(dailyStatsJson));
     

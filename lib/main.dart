@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
-
+import 'package:in_app_purchase/in_app_purchase.dart';
 
 // アプリケーションの設定
 import 'config/app_config.dart';
@@ -14,21 +13,86 @@ import 'screens/settings_screen.dart';
 
 // サービス
 import 'services/data_service.dart';
+import 'services/ad_service.dart';
+import 'services/purchase_service.dart';
 import 'services/tracking_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // 広告の初期化
-  await MobileAds.instance.initialize();
-  
-  // データサービスの初期化
-  await DataService.instance.initialize();
-  
-  // トラッキング許可の要求（iOS 14.5以降）
-  await _requestTrackingAuthorization();
+  // アプリの初期化
+  await _initializeApp();
   
   runApp(const ImpossibleTapApp());
+}
+
+/// アプリの初期化処理
+Future<void> _initializeApp() async {
+  try {
+    print('=== アプリ初期化開始 ===');
+    
+    // データサービスの初期化
+    print('データサービス初期化開始');
+    await DataService.instance.initialize();
+    print('データサービス初期化完了');
+    
+    // 広告サービスの初期化（動画再生機能含む）
+    print('広告サービス初期化開始');
+    await AdService.instance.initialize();
+    await AdService.instance.loadBannerAd();
+    await AdService.instance.loadRewardedAd();
+    print('広告サービス初期化完了');
+    
+    // 課金サービスの初期化
+    print('課金サービス初期化開始');
+    await PurchaseService.instance.initialize();
+    print('課金サービス初期化完了');
+    
+    // トラッキング許可の要求（iOS 14.5以降）
+    await _requestTrackingAuthorization();
+    
+    // 購入イベントのリスナーを設定
+    _setupPurchaseListener();
+    
+    print('=== アプリ初期化完了 ===');
+  } catch (e) {
+    print('アプリ初期化エラー: $e');
+  }
+}
+
+/// 購入イベントのリスナーを設定
+void _setupPurchaseListener() {
+  final Stream<List<PurchaseDetails>> purchaseUpdated = InAppPurchase.instance.purchaseStream;
+  
+  purchaseUpdated.listen((List<PurchaseDetails> purchaseDetailsList) {
+    _handlePurchaseUpdates(purchaseDetailsList);
+  }, onDone: () {
+    print('購入ストリーム終了');
+  }, onError: (error) {
+    print('購入ストリームエラー: $error');
+  });
+}
+
+/// 購入更新を処理
+Future<void> _handlePurchaseUpdates(List<PurchaseDetails> purchaseDetailsList) async {
+  for (final PurchaseDetails purchaseDetails in purchaseDetailsList) {
+    if (purchaseDetails.status == PurchaseStatus.pending) {
+      print('購入処理中: ${purchaseDetails.productID}');
+    } else if (purchaseDetails.status == PurchaseStatus.purchased ||
+               purchaseDetails.status == PurchaseStatus.restored) {
+      print('購入完了: ${purchaseDetails.productID}');
+      
+      // 購入状態を保存
+      await PurchaseService.instance.setProductPurchased(purchaseDetails.productID);
+      
+      // 購入完了を確認
+      await InAppPurchase.instance.completePurchase(purchaseDetails);
+    } else if (purchaseDetails.status == PurchaseStatus.error) {
+      print('購入エラー: ${purchaseDetails.error}');
+    } else if (purchaseDetails.status == PurchaseStatus.canceled) {
+      print('購入キャンセル: ${purchaseDetails.productID}');
+    }
+  }
 }
 
 /// トラッキング許可を要求
@@ -39,10 +103,10 @@ Future<void> _requestTrackingAuthorization() async {
     if (shouldRequest) {
       // 許可を要求
       final status = await TrackingService.instance.requestTrackingAuthorization();
-      debugPrint('Tracking authorization status: $status');
+      print('Tracking authorization status: $status');
     }
   } catch (e) {
-    debugPrint('Error requesting tracking authorization: $e');
+    print('Error requesting tracking authorization: $e');
   }
 }
 

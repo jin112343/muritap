@@ -41,6 +41,9 @@ dependencies:
   # 広告
   google_mobile_ads: ^4.0.0
   
+  # 課金
+  in_app_purchase: ^3.1.13
+  
   # 状態管理
   flutter_hooks: ^0.20.5
   
@@ -50,6 +53,9 @@ dependencies:
   
   # WebView
   webview_flutter: ^4.7.0
+  
+  # 共有機能
+  share_plus: ^7.2.1
   
   # GameCenter & Play Games
   # games_services: ^4.1.1

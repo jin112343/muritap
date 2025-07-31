@@ -17,7 +17,11 @@ class AppConfig {
   
   // 広告設定
   static const String bannerAdUnitIdAndroid = 'ca-app-pub-3940256099942544/6300978111'; // Android テスト用
-  static const String bannerAdUnitIdIOS = 'ca-app-pub-1187210314934709/8992304636'; // iOS 本番用
+  static const String bannerAdUnitIdIOS = 'ca-app-pub-3940256099942544/2934735716'; // iOS テスト用
+  
+  // リワード広告設定
+  static const String rewardedAdUnitIdAndroid = 'ca-app-pub-3940256099942544/5224354917'; // Android テスト用
+  static const String rewardedAdUnitIdIOS = 'ca-app-pub-3940256099942544/1712485313'; // iOS テスト用
   
   // 外部リンク
   static const String contactEmail = 'support@impossibletap.com';

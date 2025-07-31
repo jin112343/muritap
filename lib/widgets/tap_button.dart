@@ -6,11 +6,13 @@ import '../config/theme_config.dart';
 class TapButton extends StatelessWidget {
   final VoidCallback onTap;
   final AnimationController animationController;
+  final bool isProcessing; // 処理中フラグを追加
 
   const TapButton({
     super.key,
     required this.onTap,
     required this.animationController,
+    this.isProcessing = false, // デフォルトはfalse
   });
 
     @override
@@ -24,7 +26,7 @@ class TapButton extends StatelessWidget {
           return Transform.scale(
             scale: scale,
             child: GestureDetector(
-              onTapDown: (_) => onTap(),
+              onTapDown: (_) => isProcessing ? null : onTap(), // 処理中は無効
               child: Stack(
                 children: [
                   // ベース層（濃い灰色）
@@ -61,16 +63,16 @@ class TapButton extends StatelessWidget {
                       ],
                     ),
                   ),
-                  // メインボタン（オレンジ）
+                  // メインボタン（オレンジ）- 処理中は色を変更
                   Container(
                     width: 200,
                     height: 200,
                     decoration: BoxDecoration(
-                      color: ThemeConfig.primaryColor,
+                      color: isProcessing ? Colors.grey : ThemeConfig.primaryColor,
                       borderRadius: BorderRadius.circular(100),
                       boxShadow: [
                         BoxShadow(
-                          color: ThemeConfig.primaryColor.withValues(alpha: 0.4),
+                          color: (isProcessing ? Colors.grey : ThemeConfig.primaryColor).withValues(alpha: 0.4),
                           blurRadius: 20,
                           spreadRadius: 5,
                         ),
@@ -82,25 +84,37 @@ class TapButton extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: const Center(
+                    child: Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
-                            Icons.touch_app,
-                            size: 60,
-                            color: Colors.white,
-                            shadows: [
-                              Shadow(
-                                color: Colors.black,
-                                blurRadius: 10,
-                                offset: Offset(2, 2),
+                          if (isProcessing)
+                            // 処理中はローディングアイコン
+                            const SizedBox(
+                              width: 40,
+                              height: 40,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 4,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                               ),
-                            ],
-                          ),
-                          SizedBox(height: 8),
+                            )
+                          else
+                            // 通常時はタップアイコン
+                            const Icon(
+                              Icons.touch_app,
+                              size: 60,
+                              color: Colors.white,
+                              shadows: [
+                                Shadow(
+                                  color: Colors.black,
+                                  blurRadius: 10,
+                                  offset: Offset(2, 2),
+                                ),
+                              ],
+                            ),
+                          const SizedBox(height: 8),
                           Text(
-                            'Tap',
+                            isProcessing ? '処理中...' : 'Tap',
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
@@ -109,7 +123,7 @@ class TapButton extends StatelessWidget {
                                 Shadow(
                                   color: Colors.black,
                                   blurRadius: 8,
-                                  offset: Offset(2, 2),
+                                  offset: const Offset(2, 2),
                                 ),
                               ],
                             ),

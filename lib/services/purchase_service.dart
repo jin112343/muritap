@@ -1,5 +1,6 @@
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/material.dart'; // Added for IconData and Color
 
 /// 課金管理サービス
 class PurchaseService {
@@ -101,6 +102,22 @@ class PurchaseService {
     }
   }
 
+  /// タップによる購入（課金処理なし）
+  Future<bool> purchaseByTap(String productId) async {
+    try {
+      print('タップ購入開始: $productId');
+      
+      // 購入状態を保存
+      await setProductPurchased(productId);
+      
+      print('タップ購入完了: $productId');
+      return true;
+    } catch (e) {
+      print('タップ購入エラー: $e');
+      return false;
+    }
+  }
+
   /// 購入履歴を復元
   Future<void> restorePurchases() async {
     try {
@@ -169,6 +186,54 @@ class PurchaseService {
         return '3,000円';
       default:
         return '価格不明';
+    }
+  }
+
+  /// 商品の説明を取得
+  String getProductDescription(String productId) {
+    switch (productId) {
+      case removeAds:
+        return 'すべての広告を非表示にします';
+      case tap10:
+        return '1回のタップで10回分の効果を獲得';
+      case tap100:
+        return '1回のタップで100回分の効果を獲得';
+      case tap1000:
+        return '1回のタップで1000回分の効果を獲得';
+      default:
+        return '効果不明';
+    }
+  }
+
+  /// 商品のアイコンを取得
+  IconData getProductIcon(String productId) {
+    switch (productId) {
+      case removeAds:
+        return Icons.block;
+      case tap10:
+        return Icons.flash_on;
+      case tap100:
+        return Icons.bolt;
+      case tap1000:
+        return Icons.electric_bolt;
+      default:
+        return Icons.shopping_cart;
+    }
+  }
+
+  /// 商品の色を取得
+  Color getProductColor(String productId) {
+    switch (productId) {
+      case removeAds:
+        return Colors.orange;
+      case tap10:
+        return Colors.yellow;
+      case tap100:
+        return Colors.orange;
+      case tap1000:
+        return Colors.red;
+      default:
+        return Colors.grey;
     }
   }
 } 

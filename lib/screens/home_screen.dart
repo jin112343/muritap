@@ -508,6 +508,47 @@ class HomeScreen extends HookWidget {
                             color: Colors.white,
                           ),
                         ),
+                        const SizedBox(height: 8),
+                        // 現在のタップ倍率を表示
+                        FutureBuilder<int>(
+                          future: PurchaseService.instance.getTapMultiplier(),
+                          builder: (context, snapshot) {
+                            final multiplier = snapshot.data ?? 1;
+                            if (multiplier > 1) {
+                              return Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: Colors.orange,
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.flash_on,
+                                      color: Colors.orange,
+                                      size: 16,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '${multiplier}x TAP',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.orange,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
+                            return const SizedBox.shrink();
+                          },
+                        ),
                       ],
                     ),
                   ),

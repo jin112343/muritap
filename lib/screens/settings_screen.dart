@@ -111,41 +111,124 @@ class SettingsScreen extends HookWidget {
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  ListTile(
-                    leading: const Icon(Icons.block, color: Colors.orange),
-                    title: const Text('広告削除'),
-                    subtitle: const Text('100円 - すべての広告を非表示にします'),
-                    onTap: () async {
-                      Navigator.of(context).pop();
-                      // 実際の課金処理はここに実装
-                      print('広告削除を購入');
+                  // 広告削除
+                  FutureBuilder<bool>(
+                    future: PurchaseService.instance.isProductPurchased(PurchaseService.removeAds),
+                    builder: (context, snapshot) {
+                      final isPurchased = snapshot.data ?? false;
+                      return ListTile(
+                        leading: Icon(
+                          PurchaseService.instance.getProductIcon(PurchaseService.removeAds),
+                          color: isPurchased ? Colors.green : PurchaseService.instance.getProductColor(PurchaseService.removeAds),
+                        ),
+                        title: Text(PurchaseService.instance.getProductDisplayName(PurchaseService.removeAds)),
+                        subtitle: Text(PurchaseService.instance.getProductDescription(PurchaseService.removeAds)),
+                        trailing: isPurchased 
+                          ? const Icon(Icons.check_circle, color: Colors.green)
+                          : Text(PurchaseService.instance.getProductPrice(PurchaseService.removeAds)),
+                        onTap: isPurchased ? null : () async {
+                          Navigator.of(context).pop();
+                          final success = await PurchaseService.instance.purchaseByTap(PurchaseService.removeAds);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(success ? '広告削除を購入しました！' : '購入に失敗しました'),
+                                backgroundColor: success ? Colors.green : Colors.red,
+                              ),
+                            );
+                          }
+                        },
+                      );
                     },
                   ),
-                  ListTile(
-                    leading: const Icon(Icons.flash_on, color: Colors.yellow),
-                    title: const Text('1タップ10回'),
-                    subtitle: const Text('160円 - 1回のタップで10回分の効果'),
-                    onTap: () async {
-                      Navigator.of(context).pop();
-                      print('1タップ10回を購入');
+                  // 1タップ10回
+                  FutureBuilder<bool>(
+                    future: PurchaseService.instance.isProductPurchased(PurchaseService.tap10),
+                    builder: (context, snapshot) {
+                      final isPurchased = snapshot.data ?? false;
+                      return ListTile(
+                        leading: Icon(
+                          PurchaseService.instance.getProductIcon(PurchaseService.tap10),
+                          color: isPurchased ? Colors.green : PurchaseService.instance.getProductColor(PurchaseService.tap10),
+                        ),
+                        title: Text(PurchaseService.instance.getProductDisplayName(PurchaseService.tap10)),
+                        subtitle: Text(PurchaseService.instance.getProductDescription(PurchaseService.tap10)),
+                        trailing: isPurchased 
+                          ? const Icon(Icons.check_circle, color: Colors.green)
+                          : Text(PurchaseService.instance.getProductPrice(PurchaseService.tap10)),
+                        onTap: isPurchased ? null : () async {
+                          Navigator.of(context).pop();
+                          final success = await PurchaseService.instance.purchaseByTap(PurchaseService.tap10);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(success ? '1タップ10回を購入しました！' : '購入に失敗しました'),
+                                backgroundColor: success ? Colors.green : Colors.red,
+                              ),
+                            );
+                          }
+                        },
+                      );
                     },
                   ),
-                  ListTile(
-                    leading: const Icon(Icons.bolt, color: Colors.orange),
-                    title: const Text('1タップ100回'),
-                    subtitle: const Text('300円 - 1回のタップで100回分の効果'),
-                    onTap: () async {
-                      Navigator.of(context).pop();
-                      print('1タップ100回を購入');
+                  // 1タップ100回
+                  FutureBuilder<bool>(
+                    future: PurchaseService.instance.isProductPurchased(PurchaseService.tap100),
+                    builder: (context, snapshot) {
+                      final isPurchased = snapshot.data ?? false;
+                      return ListTile(
+                        leading: Icon(
+                          PurchaseService.instance.getProductIcon(PurchaseService.tap100),
+                          color: isPurchased ? Colors.green : PurchaseService.instance.getProductColor(PurchaseService.tap100),
+                        ),
+                        title: Text(PurchaseService.instance.getProductDisplayName(PurchaseService.tap100)),
+                        subtitle: Text(PurchaseService.instance.getProductDescription(PurchaseService.tap100)),
+                        trailing: isPurchased 
+                          ? const Icon(Icons.check_circle, color: Colors.green)
+                          : Text(PurchaseService.instance.getProductPrice(PurchaseService.tap100)),
+                        onTap: isPurchased ? null : () async {
+                          Navigator.of(context).pop();
+                          final success = await PurchaseService.instance.purchaseByTap(PurchaseService.tap100);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(success ? '1タップ100回を購入しました！' : '購入に失敗しました'),
+                                backgroundColor: success ? Colors.green : Colors.red,
+                              ),
+                            );
+                          }
+                        },
+                      );
                     },
                   ),
-                  ListTile(
-                    leading: const Icon(Icons.electric_bolt, color: Colors.red),
-                    title: const Text('1タップ1000回'),
-                    subtitle: const Text('3,000円 - 1回のタップで1000回分の効果'),
-                    onTap: () async {
-                      Navigator.of(context).pop();
-                      print('1タップ1000回を購入');
+                  // 1タップ1000回
+                  FutureBuilder<bool>(
+                    future: PurchaseService.instance.isProductPurchased(PurchaseService.tap1000),
+                    builder: (context, snapshot) {
+                      final isPurchased = snapshot.data ?? false;
+                      return ListTile(
+                        leading: Icon(
+                          PurchaseService.instance.getProductIcon(PurchaseService.tap1000),
+                          color: isPurchased ? Colors.green : PurchaseService.instance.getProductColor(PurchaseService.tap1000),
+                        ),
+                        title: Text(PurchaseService.instance.getProductDisplayName(PurchaseService.tap1000)),
+                        subtitle: Text(PurchaseService.instance.getProductDescription(PurchaseService.tap1000)),
+                        trailing: isPurchased 
+                          ? const Icon(Icons.check_circle, color: Colors.green)
+                          : Text(PurchaseService.instance.getProductPrice(PurchaseService.tap1000)),
+                        onTap: isPurchased ? null : () async {
+                          Navigator.of(context).pop();
+                          final success = await PurchaseService.instance.purchaseByTap(PurchaseService.tap1000);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(success ? '1タップ1000回を購入しました！' : '購入に失敗しました'),
+                                backgroundColor: success ? Colors.green : Colors.red,
+                              ),
+                            );
+                          }
+                        },
+                      );
                     },
                   ),
                 ],
@@ -153,7 +236,7 @@ class SettingsScreen extends HookWidget {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('キャンセル'),
+                  child: const Text('閉じる'),
                 ),
               ],
             ),
@@ -540,6 +623,46 @@ class SettingsScreen extends HookWidget {
                               ),
                             ),
                           ],
+                        ),
+                        
+                        const SizedBox(height: 12),
+                        
+                        // 現在のタップ倍率
+                        FutureBuilder<int>(
+                          future: PurchaseService.instance.getTapMultiplier(),
+                          builder: (context, snapshot) {
+                            final multiplier = snapshot.data ?? 1;
+                            return Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  '現在のタップ倍率',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.flash_on,
+                                      color: multiplier > 1 ? Colors.orange : Colors.grey,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '${multiplier}x',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: multiplier > 1 ? Colors.orange : Colors.grey,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            );
+                          },
                         ),
                       ],
                     ),

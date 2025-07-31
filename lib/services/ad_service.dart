@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../config/app_config.dart';
 import 'dart:async'; // Completerを追加
+import 'purchase_service.dart'; // 購入サービスをインポート
 
 /// 広告管理サービス
 /// バナー広告とリワード広告（動画）を管理
@@ -22,6 +23,10 @@ class AdService {
   Future<void> initialize() async {
     try {
       await MobileAds.instance.initialize();
+      
+      // 広告削除状態をチェック
+      await updateAdsRemovedStatus();
+      
       print('AdService initialized successfully');
     } catch (e) {
       print('AdService initialization error: $e');
@@ -31,6 +36,13 @@ class AdService {
   /// バナー広告を読み込み
   Future<void> loadBannerAd() async {
     try {
+      // 広告削除が購入されているかチェック
+      await updateAdsRemovedStatus();
+      if (_isAdsRemoved) {
+        print('広告削除が購入されているため、バナー広告を読み込みません');
+        return;
+      }
+
       // プラットフォーム別の広告IDを選択
       final adUnitId = Platform.isIOS 
         ? AppConfig.bannerAdUnitIdIOS
@@ -89,6 +101,13 @@ class AdService {
   /// リワード広告（動画）を読み込み
   Future<void> loadRewardedAd() async {
     try {
+      // 広告削除が購入されているかチェック
+      await updateAdsRemovedStatus();
+      if (_isAdsRemoved) {
+        print('広告削除が購入されているため、リワード広告を読み込みません');
+        return;
+      }
+
       // プラットフォーム別の広告IDを選択
       final adUnitId = Platform.isIOS 
         ? AppConfig.rewardedAdUnitIdIOS
@@ -122,6 +141,13 @@ class AdService {
     print('AdService: showRewardedAd開始');
     print('AdService: リワード広告読み込み状態: $_isRewardedAdLoaded');
     print('AdService: リワード広告オブジェクト: ${_rewardedAd != null ? "存在" : "null"}');
+    
+    // 広告削除が購入されているかチェック
+    await updateAdsRemovedStatus();
+    if (_isAdsRemoved) {
+      print('AdService: 広告削除が購入されているため、リワード広告を表示しません');
+      return false;
+    }
     
     if (!_isRewardedAdLoaded || _rewardedAd == null) {
       print('AdService: リワード広告が読み込まれていません');
@@ -162,6 +188,11 @@ class AdService {
 
   /// バナー広告ウィジェットを取得
   Widget? getBannerAdWidget() {
+    // 広告削除が購入されている場合は何も表示しない
+    if (_isAdsRemoved) {
+      return null;
+    }
+    
     // 広告が非表示の場合は何も表示しない
     if (!_isAdVisible) {
       return null;
@@ -216,6 +247,16 @@ class AdService {
   bool _isAdVisible = true;
   bool get isAdVisible => _isAdVisible;
 
+  /// 広告削除状態のフラグ
+  bool _isAdsRemoved = false;
+  bool get isAdsRemoved => _isAdsRemoved;
+
+  /// 広告削除状態を更新
+  Future<void> updateAdsRemovedStatus() async {
+    _isAdsRemoved = await PurchaseService.instance.isAdsRemoved();
+    print('広告削除状態を更新: $_isAdsRemoved');
+  }
+
   /// 広告を非表示にする
   void hideAd() {
     _isAdVisible = false;
@@ -224,5 +265,25 @@ class AdService {
   /// 広告を表示する
   void showAd() {
     _isAdVisible = true;
+  }
+
+  /// 広告削除状態をチェックして広告の表示を更新
+  Future<void> updateAdVisibility() async {
+    await updateAdsRemovedStatus();
+    if (_isAdsRemoved) {
+      // 広告削除が購入されている場合、既存の広告を破棄
+      _bannerAd?.dispose();
+      _rewardedAd?.dispose();
+      _bannerAd = null;
+      _rewardedAd = null;
+      _isBannerAdLoaded = false;
+      _isRewardedAdLoaded = false;
+      print('広告削除が購入されているため、すべての広告を破棄しました');
+    } else {
+      // 広告削除が購入されていない場合、広告を再読み込み
+      await loadBannerAd();
+      await loadRewardedAd();
+      print('広告削除が購入されていないため、広告を再読み込みしました');
+    }
   }
 } 

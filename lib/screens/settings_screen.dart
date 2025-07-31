@@ -9,6 +9,7 @@ import '../services/purchase_service.dart';
 import '../services/stats_service.dart';
 import '../widgets/stats_chart.dart';
 import 'webview_screen.dart';
+import '../services/ad_service.dart';
 
 /// 設定画面
 /// アプリ情報と外部リンクを提供
@@ -136,6 +137,10 @@ class SettingsScreen extends HookWidget {
                                 backgroundColor: success ? Colors.green : Colors.red,
                               ),
                             );
+                            // 購入成功時は広告の表示状態を更新
+                            if (success) {
+                              await AdService.instance.updateAdVisibility();
+                            }
                           }
                         },
                       );

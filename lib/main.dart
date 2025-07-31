@@ -36,17 +36,18 @@ Future<void> _initializeApp() async {
     await DataService.instance.initialize();
     print('データサービス初期化完了');
     
-    // 広告サービスの初期化（動画再生機能含む）
-    print('広告サービス初期化開始');
-    await AdService.instance.initialize();
-    await AdService.instance.loadBannerAd();
-    await AdService.instance.loadRewardedAd();
-    print('広告サービス初期化完了');
-    
     // 課金サービスの初期化
     print('課金サービス初期化開始');
     await PurchaseService.instance.initialize();
     print('課金サービス初期化完了');
+    
+    // 広告サービスの初期化（動画再生機能含む）
+    print('広告サービス初期化開始');
+    await AdService.instance.initialize();
+    
+    // 広告削除状態をチェックして広告の表示を制御
+    await AdService.instance.updateAdVisibility();
+    print('広告サービス初期化完了');
     
     // トラッキング許可の要求（iOS 14.5以降）
     await _requestTrackingAuthorization();

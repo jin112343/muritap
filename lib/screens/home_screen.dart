@@ -12,7 +12,6 @@ import '../services/game_center_service.dart';
 import '../services/title_service.dart';
 import '../services/stats_service.dart';
 import '../widgets/tap_button.dart';
-import 'package:flutter/foundation.dart'; // kDebugModeを追加
 
 /// ホーム画面
 /// メインのタップ機能とレベル表示を提供

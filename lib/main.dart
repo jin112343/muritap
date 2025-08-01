@@ -57,6 +57,11 @@ Future<void> _initializeApp() async {
     // アプリ起動時にすべての通知をクリア
     await NotificationService.instance.clearAllNotifications();
     print('通知をクリアしました');
+    
+    // 毎日20時の通知をスケジュール
+    await NotificationService.instance.scheduleDailyNotification();
+    print('毎日20時の通知をスケジュールしました');
+    
     print('通知サービス初期化完了');
     
     // トラッキング許可の要求（iOS 14.5以降）

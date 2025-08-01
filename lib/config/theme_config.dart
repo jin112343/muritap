@@ -60,7 +60,6 @@ class ThemeConfig {
         primary: Color(0xFFF97316), // orange-500
         secondary: Color(0xFFFBBF24), // yellow-400
         onPrimary: Colors.white,
-        background: Color(0xFF0A0A0A),
         surface: Color(0xFF18181B), // zinc-900
         onSurface: Colors.white,
         error: Color(0xFFDC2626), // red-600

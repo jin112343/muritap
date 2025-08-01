@@ -219,36 +219,19 @@ class PurchaseScreen extends HookWidget {
                 
                 if (!isPurchased) ...[
                   const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: isLoading.value 
-                            ? null 
-                            : () => _purchaseProduct(context, productId, isLoading, selectedProductId),
-                          icon: const Icon(Icons.payment),
-                          label: const Text('実際の課金'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: ThemeConfig.primaryColor,
-                            foregroundColor: Colors.white,
-                          ),
-                        ),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: isLoading.value 
+                        ? null 
+                        : () => _purchaseProduct(context, productId, isLoading, selectedProductId),
+                      icon: const Icon(Icons.payment),
+                      label: const Text('購入する'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: ThemeConfig.primaryColor,
+                        foregroundColor: Colors.white,
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: isLoading.value 
-                            ? null 
-                            : () => _purchaseByTap(context, productId, isLoading, selectedProductId),
-                          icon: const Icon(Icons.touch_app),
-                          label: const Text('テスト購入'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.orange,
-                            foregroundColor: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ] else ...[
                   const SizedBox(height: 12),
@@ -333,51 +316,5 @@ class PurchaseScreen extends HookWidget {
     }
   }
 
-  Future<void> _purchaseByTap(
-    BuildContext context,
-    String productId,
-    ValueNotifier<bool> isLoading,
-    ValueNotifier<String?> selectedProductId,
-  ) async {
-    isLoading.value = true;
-    selectedProductId.value = productId;
-    
-    try {
-      print('=== タップ購入処理開始 ===');
-      print('商品ID: $productId');
-      
-      final success = await PurchaseService.instance.purchaseByTap(productId);
-      
-      if (context.mounted) {
-        if (success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('${PurchaseService.instance.getProductDisplayName(productId)}をテスト購入しました！'),
-              backgroundColor: Colors.orange,
-            ),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('テスト購入に失敗しました'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      print('❌ テスト購入処理でエラーが発生: $e');
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('テスト購入エラー: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      isLoading.value = false;
-      selectedProductId.value = null;
-    }
-  }
+
 } 

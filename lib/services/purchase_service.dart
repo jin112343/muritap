@@ -226,22 +226,6 @@ class PurchaseService {
     }
   }
 
-  /// タップによる購入（課金処理なし）
-  Future<bool> purchaseByTap(String productId) async {
-    try {
-      print('タップ購入開始: $productId');
-      
-      // 購入状態を保存
-      await setProductPurchased(productId);
-      
-      print('タップ購入完了: $productId');
-      return true;
-    } catch (e) {
-      print('タップ購入エラー: $e');
-      return false;
-    }
-  }
-
   /// 実際の課金による購入
   Future<bool> purchaseWithRealPayment(String productId) async {
     try {
@@ -347,7 +331,12 @@ class PurchaseService {
     return multiplier;
   }
 
-  /// 広告が削除されているか
+  /// バナー広告が削除されているか
+  Future<bool> isBannerAdsRemoved() async {
+    return await isProductPurchased(removeAds);
+  }
+
+  /// 広告が削除されているか（後方互換性のため残す）
   Future<bool> isAdsRemoved() async {
     return await isProductPurchased(removeAds);
   }
@@ -355,7 +344,7 @@ class PurchaseService {
   /// 商品の表示名を取得
   String getProductDisplayName(String productId) {
     if (productId == removeAds) {
-      return '広告削除';
+      return 'バナー広告削除';
     } else if (productId == tap10) {
       return '1タップ10回';
     } else if (productId == tap100) {
@@ -391,7 +380,7 @@ class PurchaseService {
   /// 商品の説明を取得
   String getProductDescription(String productId) {
     if (productId == removeAds) {
-      return 'すべての広告を非表示にします';
+      return 'バナー広告のみを非表示にします。\n（動画広告は引き続き利用可能）';
     } else if (productId == tap10) {
       return '1回のタップで10回分の効果を獲得';
     } else if (productId == tap100) {

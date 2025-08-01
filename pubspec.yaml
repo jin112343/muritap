@@ -60,6 +60,9 @@ dependencies:
   # 通知
   flutter_local_notifications: ^19.4.0
   
+  # タイムゾーン（通知スケジュール用）
+  timezone: ^0.9.2
+  
   # GameCenter & Play Games
   # games_services: ^4.1.1
 

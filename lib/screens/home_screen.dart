@@ -415,8 +415,8 @@ class HomeScreen extends HookWidget {
                 children: [
                   // レベル表示（上部）
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                    margin: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    margin: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: ThemeConfig.surfaceColor,
                       borderRadius: BorderRadius.circular(20),
@@ -486,7 +486,7 @@ class HomeScreen extends HookWidget {
                   
                   // タップ数表示（上部）
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                     child: Column(
                       children: [
                         Text(
@@ -498,7 +498,7 @@ class HomeScreen extends HookWidget {
                             letterSpacing: 1.2,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 4),
                         Text(
                           totalTaps.value.toString(),
                           style: TextStyle(
@@ -507,7 +507,7 @@ class HomeScreen extends HookWidget {
                             color: Colors.white,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 4),
                         // 現在のタップ倍率を表示
                         FutureBuilder<int>(
                           future: PurchaseService.instance.getTapMultiplier(),
@@ -554,8 +554,8 @@ class HomeScreen extends HookWidget {
                   
                   // プログレスバー（上部）
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                    margin: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    margin: const EdgeInsets.all(8),
                     child: Column(
                       children: [
                         Row(
@@ -580,14 +580,14 @@ class HomeScreen extends HookWidget {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 4),
                         LinearProgressIndicator(
                           value: _getProgressFactor(currentLevel.value, totalTaps.value),
                           backgroundColor: Colors.grey[800],
                           valueColor: AlwaysStoppedAnimation<Color>(ThemeConfig.primaryColor),
-                          minHeight: 8,
+                          minHeight: 6,
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 4),
                         // 次のレベルまでの残りタップ数
                         Builder(
                           builder: (context) {
@@ -620,14 +620,12 @@ class HomeScreen extends HookWidget {
                     ),
                   ),
                   
-                  // スペーサー
-                  Expanded(
-                    child: Container(),
-                  ),
+                  // スペーサー（最小限に）
+                  const SizedBox(height: 20),
                   
                   // タップボタン（下部）
                   Container(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(16),
                     child: Center(
                       child: TapButton(
                         onTap: onTap,

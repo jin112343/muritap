@@ -89,7 +89,7 @@ class TapButton extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           if (isProcessing)
-                            // 処理中はローディングアイコン
+                            // 処理中はローディングアイコンのみ
                             const SizedBox(
                               width: 40,
                               height: 40,
@@ -114,7 +114,7 @@ class TapButton extends StatelessWidget {
                             ),
                           const SizedBox(height: 8),
                           Text(
-                            isProcessing ? '処理中...' : 'Tap',
+                            'Tap',
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,

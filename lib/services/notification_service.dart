@@ -27,7 +27,7 @@ class NotificationService {
       const DarwinInitializationSettings initializationSettingsIOS =
           DarwinInitializationSettings(
         requestAlertPermission: true,
-        requestBadgePermission: true,
+        requestBadgePermission: false, // バッジ権限を無効化
         requestSoundPermission: true,
       );
 
@@ -156,9 +156,53 @@ class NotificationService {
   Future<void> clearAllNotifications() async {
     try {
       await _flutterLocalNotificationsPlugin.cancelAll();
-      print('すべての通知をクリアしました');
+      
+      // バッジを確実にクリア
+      await _clearBadge();
+      
+      print('すべての通知とバッジをクリアしました');
     } catch (e) {
       print('通知クリアエラー: $e');
+    }
+  }
+
+  /// バッジをクリア
+  Future<void> clearBadge() async {
+    await _clearBadge();
+  }
+
+  /// バッジをクリアする内部メソッド
+  Future<void> _clearBadge() async {
+    try {
+      // iOSの場合、バッジ数を0に設定
+      await _flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
+          ?.requestPermissions(
+            alert: true,
+            badge: false,
+            sound: true,
+          );
+      
+      // バッジをクリアするために通知を0件で表示
+      await _flutterLocalNotificationsPlugin.show(
+        9999, // 一時的な通知ID
+        '', // 空のタイトル
+        '', // 空の本文
+        const NotificationDetails(
+          iOS: DarwinNotificationDetails(
+            presentAlert: false,
+            presentBadge: false,
+            presentSound: false,
+          ),
+        ),
+      );
+      
+      // すぐに通知をキャンセル
+      await _flutterLocalNotificationsPlugin.cancel(9999);
+      
+      print('バッジをクリアしました');
+    } catch (e) {
+      print('バッジクリアエラー: $e');
     }
   }
 
@@ -193,7 +237,7 @@ class NotificationService {
       const DarwinNotificationDetails iOSPlatformChannelSpecifics =
           DarwinNotificationDetails(
         presentAlert: true,
-        presentBadge: true,
+        presentBadge: false, // バッジを無効化
         presentSound: true,
       );
 
@@ -225,7 +269,7 @@ class NotificationService {
               IOSFlutterLocalNotificationsPlugin>()
           ?.requestPermissions(
             alert: true,
-            badge: true,
+            badge: false, // バッジを無効化
             sound: true,
           );
       
@@ -244,7 +288,7 @@ class NotificationService {
               IOSFlutterLocalNotificationsPlugin>()
           ?.requestPermissions(
             alert: true,
-            badge: true,
+            badge: false, // バッジを無効化
             sound: true,
           );
       

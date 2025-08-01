@@ -58,6 +58,11 @@ Future<void> _initializeApp() async {
     await NotificationService.instance.clearAllNotifications();
     print('通知をクリアしました');
     
+    // 少し待ってからバッジをクリア（確実性のため）
+    await Future.delayed(const Duration(milliseconds: 500));
+    await NotificationService.instance.clearBadge();
+    print('バッジをクリアしました');
+    
     // 毎日20時の通知をスケジュール
     await NotificationService.instance.scheduleDailyNotification();
     print('毎日20時の通知をスケジュールしました');

@@ -16,6 +16,7 @@ import 'services/data_service.dart';
 import 'services/ad_service.dart';
 import 'services/purchase_service.dart';
 import 'services/tracking_service.dart';
+import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -49,6 +50,15 @@ Future<void> _initializeApp() async {
     await AdService.instance.updateAdVisibility();
     print('広告サービス初期化完了');
     
+    // 通知サービスの初期化
+    print('通知サービス初期化開始');
+    await NotificationService.instance.initialize();
+    
+    // アプリ起動時にすべての通知をクリア
+    await NotificationService.instance.clearAllNotifications();
+    print('通知をクリアしました');
+    print('通知サービス初期化完了');
+    
     // トラッキング許可の要求（iOS 14.5以降）
     await _requestTrackingAuthorization();
     
@@ -76,22 +86,41 @@ void _setupPurchaseListener() {
 
 /// 購入更新を処理
 Future<void> _handlePurchaseUpdates(List<PurchaseDetails> purchaseDetailsList) async {
+  print('購入更新イベントを受信: ${purchaseDetailsList.length}件');
+  
   for (final PurchaseDetails purchaseDetails in purchaseDetailsList) {
+    print('購入詳細処理開始: ${purchaseDetails.productID} - ステータス: ${purchaseDetails.status}');
+    
     if (purchaseDetails.status == PurchaseStatus.pending) {
       print('購入処理中: ${purchaseDetails.productID}');
     } else if (purchaseDetails.status == PurchaseStatus.purchased ||
                purchaseDetails.status == PurchaseStatus.restored) {
       print('購入完了: ${purchaseDetails.productID}');
+      print('購入詳細: ${purchaseDetails.purchaseID}');
       
       // 購入状態を保存
       await PurchaseService.instance.setProductPurchased(purchaseDetails.productID);
+      print('購入状態を保存完了: ${purchaseDetails.productID}');
+      
+      // 広告削除の場合は広告の表示状態を更新
+      if (purchaseDetails.productID == PurchaseService.removeAds) {
+        print('広告削除購入のため、広告表示状態を更新');
+        await AdService.instance.updateAdVisibility();
+      }
       
       // 購入完了を確認
       await InAppPurchase.instance.completePurchase(purchaseDetails);
+      print('購入完了処理完了: ${purchaseDetails.productID}');
+      
+      print('購入処理完了: ${purchaseDetails.productID}');
     } else if (purchaseDetails.status == PurchaseStatus.error) {
       print('購入エラー: ${purchaseDetails.error}');
+      print('エラー詳細: ${purchaseDetails.error?.message}');
+      print('エラーコード: ${purchaseDetails.error?.code}');
     } else if (purchaseDetails.status == PurchaseStatus.canceled) {
       print('購入キャンセル: ${purchaseDetails.productID}');
+    } else {
+      print('不明な購入ステータス: ${purchaseDetails.status}');
     }
   }
 }

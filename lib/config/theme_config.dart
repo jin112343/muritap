@@ -97,4 +97,5 @@ class ThemeConfig {
   static const Color errorColor = Color(0xFFDC2626); // red-600
   static const Color backgroundColor = Color(0xFF0A0A0A); // zinc-950
   static const Color surfaceColor = Color(0xFF18181B); // zinc-900
+  static const Color textColor = Colors.white; // テキストカラー
 } 

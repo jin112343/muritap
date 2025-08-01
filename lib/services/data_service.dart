@@ -139,7 +139,10 @@ class DataService {
   /// 指定レベルの必要タップ数を計算
   int getRequiredTapsForLevel(int level) {
     if (level <= 1) return 0;
-    return (AppConfig.baseTaps * pow(level, AppConfig.growthRate)).floor();
+    
+    // レベル99までは成長率1.5、レベル100からは成長率2.0
+    final growthRate = level <= 99 ? 1.5 : 2.0;
+    return (AppConfig.baseTaps * pow(level, growthRate)).floor();
   }
 
   /// データをリセット

@@ -2,6 +2,16 @@
 
 蓄積型の中毒系タップアプリ「絶対ムリタップ」のFlutter版です。
 
+
+# UI
+
+<img width="200" height="400" alt="Slice 1" src="https://github.com/user-attachments/assets/ece395a2-d257-4857-a408-ab80ce021eef" />
+<img width="200" height="400" alt="Slice 2" src="https://github.com/user-attachments/assets/0eaddb04-a06f-4c4f-8253-c427c222c670" />
+<img width="200" height="400" alt="Slice 3" src="https://github.com/user-attachments/assets/876b7872-dd1f-40f9-803f-070eebd997a8" />
+<img width="200" height="400" alt="Slice 4" src="https://github.com/user-attachments/assets/f554d3e9-6d43-422e-aef2-e49d6018ce8a" />
+
+
+
 ## 🎯 アプリ概要
 
 「絶対ムリ」と思えるタップ数に挑戦し続ける、シンプルなタップゲームです。

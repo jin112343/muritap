@@ -173,6 +173,44 @@ class StatsService {
     return dailyStats[todayKey] ?? 0;
   }
 
+  /// 今週のタップ数を取得
+  Future<int> getWeeklyTaps() async {
+    final weeklyStats = await getThisWeekStats();
+    int total = 0;
+    for (final stat in weeklyStats) {
+      total += stat.taps;
+    }
+    return total;
+  }
+
+  /// 今月のタップ数を取得
+  Future<int> getMonthlyTaps() async {
+    final prefs = await SharedPreferences.getInstance();
+    final dailyStatsJson = prefs.getString(_dailyStatsKey) ?? '{}';
+    final dailyStats = Map<String, dynamic>.from(jsonDecode(dailyStatsJson));
+    
+    final now = DateTime.now();
+    final currentMonth = now.month;
+    final currentYear = now.year;
+    
+    int total = 0;
+    
+    // 今月のデータを集計
+    for (final entry in dailyStats.entries) {
+      final dateParts = entry.key.split('-');
+      if (dateParts.length == 3) {
+        final year = int.tryParse(dateParts[0]);
+        final month = int.tryParse(dateParts[1]);
+        
+        if (year == currentYear && month == currentMonth) {
+          total += entry.value as int;
+        }
+      }
+    }
+    
+    return total;
+  }
+
   /// 統計データをクリア
   Future<void> clearStats() async {
     final prefs = await SharedPreferences.getInstance();

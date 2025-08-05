@@ -63,6 +63,61 @@ class PurchaseScreen extends HookWidget {
             
             const SizedBox(height: 20),
             
+            // 現在の倍率表示
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16.0),
+              padding: const EdgeInsets.all(16.0),
+              decoration: BoxDecoration(
+                color: ThemeConfig.primaryColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: ThemeConfig.primaryColor.withValues(alpha: 0.3),
+                  width: 1,
+                ),
+              ),
+              child: FutureBuilder<int>(
+                future: PurchaseService.instance.getTapMultiplier(),
+                builder: (context, snapshot) {
+                  final multiplier = snapshot.data ?? 1;
+                  return Row(
+                    children: [
+                      Icon(
+                        Icons.flash_on,
+                        color: ThemeConfig.primaryColor,
+                        size: 24,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '現在のタップ倍率',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: ThemeConfig.primaryColor,
+                              ),
+                            ),
+                            Text(
+                              '${multiplier}x',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: ThemeConfig.primaryColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+            
+            const SizedBox(height: 20),
+            
             // 商品リスト
             Expanded(
               child: ListView(

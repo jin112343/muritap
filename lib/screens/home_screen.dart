@@ -61,6 +61,20 @@ class HomeScreen extends HookWidget {
     // バナー広告の読み込み状態を監視
     final isBannerAdLoaded = useState(AdService.instance.isBannerAdLoaded);
     
+    // 新しい機能の状態
+    final showTutorial = useState(false);
+    final showDailyChallenge = useState(false);
+    final showAchievements = useState(false);
+    final showStats = useState(false);
+    
+    // デイリーチャレンジの状態
+    final dailyChallengeProgress = useState(0);
+    final dailyChallengeTarget = useState(100);
+    final dailyChallengeReward = useState(50);
+    
+    // アチーブメントの状態
+    final achievements = useState<List<Map<String, dynamic>>>([]);
+    
     // 広告の状態を定期的にチェック
     useEffect(() {
       final timer = Timer.periodic(const Duration(seconds: 5), (timer) {
@@ -112,6 +126,102 @@ class HomeScreen extends HookWidget {
       
       return () => timer.cancel();
     }, []);
+
+
+
+    // アチーブメントを更新する関数
+    void _updateAchievements() {
+      final newAchievements = <Map<String, dynamic>>[];
+      
+      // レベルアチーブメント
+      if (currentLevel.value >= 10) {
+        newAchievements.add({
+          'title': 'レベル10達成',
+          'description': 'レベル10に到達しました',
+          'icon': Icons.star,
+          'color': Colors.amber,
+          'completed': true,
+        });
+      }
+      
+      if (currentLevel.value >= 50) {
+        newAchievements.add({
+          'title': 'レベル50達成',
+          'description': 'レベル50に到達しました',
+          'icon': Icons.star,
+          'color': Colors.orange,
+          'completed': true,
+        });
+      }
+      
+      if (currentLevel.value >= 100) {
+        newAchievements.add({
+          'title': 'レベル100達成',
+          'description': 'レベル100に到達しました',
+          'icon': Icons.star,
+          'color': Colors.red,
+          'completed': true,
+        });
+      }
+      
+      // タップ数アチーブメント
+      if (totalTaps.value >= 1000) {
+        newAchievements.add({
+          'title': '1000タップ達成',
+          'description': '1000回タップしました',
+          'icon': Icons.touch_app,
+          'color': Colors.blue,
+          'completed': true,
+        });
+      }
+      
+      if (totalTaps.value >= 10000) {
+        newAchievements.add({
+          'title': '10000タップ達成',
+          'description': '10000回タップしました',
+          'icon': Icons.touch_app,
+          'color': Colors.green,
+          'completed': true,
+        });
+      }
+      
+      achievements.value = newAchievements;
+    }
+
+
+
+    // アチーブメントを更新
+    useEffect(() {
+      _updateAchievements();
+    }, [totalTaps.value, currentLevel.value]);
+
+    // デイリーチャレンジを開始
+    void _startDailyChallenge() {
+      showDailyChallenge.value = true;
+      dailyChallengeProgress.value = 0;
+      dailyChallengeTarget.value = 100 + (currentLevel.value * 10);
+      dailyChallengeReward.value = 50 + (currentLevel.value * 5);
+    }
+
+    // デイリーチャレンジを完了
+    void _completeDailyChallenge() {
+      if (dailyChallengeProgress.value >= dailyChallengeTarget.value) {
+        // 報酬を付与
+        final reward = dailyChallengeReward.value;
+        final newTotalTaps = totalTaps.value + reward;
+        totalTaps.value = newTotalTaps;
+        DataService.instance.saveTotalTaps(newTotalTaps);
+        
+        showDailyChallenge.value = false;
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('デイリーチャレンジ完了！${reward}タップを獲得しました'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    }
 
     // 動画再生ボタンの処理（ポップアップ表示）
     void onWatchAd() async {
@@ -294,6 +404,14 @@ class HomeScreen extends HookWidget {
         final currentRealTaps = DataService.instance.getRealTapCount();
         await DataService.instance.saveRealTapCount(currentRealTaps + 1);
 
+        // デイリーチャレンジの進捗を更新
+        if (showDailyChallenge.value) {
+          dailyChallengeProgress.value += tapIncrement;
+          if (dailyChallengeProgress.value >= dailyChallengeTarget.value) {
+            _completeDailyChallenge();
+          }
+        }
+
         // レベルアップ判定（現在のレベルで判定）
         final currentLevelForCheck = DataService.instance.getCurrentLevel();
         if (DataService.instance.isLevelUp(newTotalTaps, currentLevelForCheck)) {
@@ -385,6 +503,57 @@ class HomeScreen extends HookWidget {
             elevation: 0,
             centerTitle: true,
             actions: [
+              // 新機能ボタン
+              PopupMenuButton<String>(
+                icon: Icon(Icons.more_vert, color: ThemeConfig.primaryColor),
+                onSelected: (value) {
+                  switch (value) {
+                    case 'tutorial':
+                      showTutorial.value = true;
+                      break;
+                    case 'challenge':
+                      _startDailyChallenge();
+                      break;
+                    case 'achievements':
+                      showAchievements.value = true;
+                      break;
+
+                  }
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: 'tutorial',
+                    child: Row(
+                      children: [
+                        Icon(Icons.help_outline),
+                        SizedBox(width: 8),
+                        Text('チュートリアル'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: 'challenge',
+                    child: Row(
+                      children: [
+                        Icon(Icons.emoji_events),
+                        SizedBox(width: 8),
+                        Text('デイリーチャレンジ'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: 'achievements',
+                    child: Row(
+                      children: [
+                        Icon(Icons.workspace_premium),
+                        SizedBox(width: 8),
+                        Text('アチーブメント'),
+                      ],
+                    ),
+                  ),
+
+                ],
+              ),
               // 動画再生ボタン
               IconButton(
                 onPressed: onWatchAd,
@@ -620,17 +789,70 @@ class HomeScreen extends HookWidget {
                     ),
                   ),
                   
-                  // スペーサー（最小限に）
-                  const SizedBox(height: 20),
+                  // デイリーチャレンジ表示
+                  if (showDailyChallenge.value)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                      margin: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Colors.orange.withValues(alpha: 0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'デイリーチャレンジ',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.orange,
+                                ),
+                              ),
+                              Text(
+                                '報酬: ${dailyChallengeReward.value}タップ',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.orange,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          LinearProgressIndicator(
+                            value: dailyChallengeProgress.value / dailyChallengeTarget.value,
+                            backgroundColor: Colors.grey[800],
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
+                            minHeight: 6,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${dailyChallengeProgress.value}/${dailyChallengeTarget.value}',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[400],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   
-                  // タップボタン（下部）
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    child: Center(
-                      child: TapButton(
-                        onTap: onTap,
-                        animationController: tapAnimationController,
-                        isProcessing: isProcessingTap.value,
+                  // スペーサー（レスポンシブ対応）
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: Center(
+                        child: TapButton(
+                          onTap: onTap,
+                          animationController: tapAnimationController,
+                          isProcessing: isProcessingTap.value,
+                        ),
                       ),
                     ),
                   ),
@@ -713,7 +935,287 @@ class HomeScreen extends HookWidget {
             );
           },
         ),
+        
+        // チュートリアルダイアログ
+        if (showTutorial.value)
+          _buildTutorialDialog(context, () => showTutorial.value = false),
+        
+        // アチーブメントダイアログ
+        if (showAchievements.value)
+          _buildAchievementsDialog(context, () => showAchievements.value = false),
+        
+
       ],
     );
   }
+
+  // チュートリアルダイアログ
+  Widget _buildTutorialDialog(BuildContext context, VoidCallback onClose) {
+    return Dialog(
+      backgroundColor: ThemeConfig.surfaceColor,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'チュートリアル',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: ThemeConfig.primaryColor,
+              ),
+            ),
+            const SizedBox(height: 20),
+            _buildTutorialStep(
+              icon: Icons.touch_app,
+              title: 'タップしてレベルアップ',
+              description: '中央のボタンをタップしてレベルを上げましょう。レベルが上がると称号が変わります。',
+            ),
+            const SizedBox(height: 16),
+            _buildTutorialStep(
+              icon: Icons.play_circle_outline,
+              title: '動画で報酬獲得',
+              description: '動画広告を視聴して100タップの報酬を獲得できます。',
+            ),
+            const SizedBox(height: 16),
+            _buildTutorialStep(
+              icon: Icons.emoji_events,
+              title: 'デイリーチャレンジ',
+              description: '毎日のチャレンジをクリアして特別な報酬を獲得しましょう。',
+            ),
+            const SizedBox(height: 16),
+            _buildTutorialStep(
+              icon: Icons.workspace_premium,
+              title: 'アチーブメント',
+              description: '様々な目標を達成してアチーブメントを解除しましょう。',
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: onClose,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ThemeConfig.primaryColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              child: const Text('理解しました'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // チュートリアルステップ
+  Widget _buildTutorialStep({
+    required IconData icon,
+    required String title,
+    required String description,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          icon,
+          color: ThemeConfig.primaryColor,
+          size: 24,
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                description,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[400],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // アチーブメントダイアログ
+  Widget _buildAchievementsDialog(BuildContext context, VoidCallback onClose) {
+    return Dialog(
+      backgroundColor: ThemeConfig.surfaceColor,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'アチーブメント',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: ThemeConfig.primaryColor,
+              ),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              height: 300,
+              child: FutureBuilder<List<Map<String, dynamic>>>(
+                future: _getAchievements(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  
+                  final achievements = snapshot.data ?? [];
+                  return ListView.builder(
+                    itemCount: achievements.length,
+                    itemBuilder: (context, index) {
+                      final achievement = achievements[index];
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: achievement['color'].withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: achievement['color'].withValues(alpha: 0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              achievement['icon'],
+                              color: achievement['color'],
+                              size: 24,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    achievement['title'],
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: achievement['color'],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    achievement['description'],
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey[400],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (achievement['completed'])
+                              Icon(
+                                Icons.check_circle,
+                                color: achievement['color'],
+                                size: 24,
+                              ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: onClose,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ThemeConfig.primaryColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              child: const Text('閉じる'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // アチーブメントを取得
+  Future<List<Map<String, dynamic>>> _getAchievements() async {
+    final currentLevel = DataService.instance.getCurrentLevel();
+    final totalTaps = DataService.instance.getTotalTaps();
+    final newAchievements = <Map<String, dynamic>>[];
+    
+    // レベルアチーブメント
+    if (currentLevel >= 10) {
+      newAchievements.add({
+        'title': 'レベル10達成',
+        'description': 'レベル10に到達しました',
+        'icon': Icons.star,
+        'color': Colors.amber,
+        'completed': true,
+      });
+    }
+    
+    if (currentLevel >= 50) {
+      newAchievements.add({
+        'title': 'レベル50達成',
+        'description': 'レベル50に到達しました',
+        'icon': Icons.star,
+        'color': Colors.orange,
+        'completed': true,
+      });
+    }
+    
+    if (currentLevel >= 100) {
+      newAchievements.add({
+        'title': 'レベル100達成',
+        'description': 'レベル100に到達しました',
+        'icon': Icons.star,
+        'color': Colors.red,
+        'completed': true,
+      });
+    }
+    
+    // タップ数アチーブメント
+    if (totalTaps >= 1000) {
+      newAchievements.add({
+        'title': '1000タップ達成',
+        'description': '1000回タップしました',
+        'icon': Icons.touch_app,
+        'color': Colors.blue,
+        'completed': true,
+      });
+    }
+    
+    if (totalTaps >= 10000) {
+      newAchievements.add({
+        'title': '10000タップ達成',
+        'description': '10000回タップしました',
+        'icon': Icons.touch_app,
+        'color': Colors.green,
+        'completed': true,
+      });
+    }
+    
+    return newAchievements;
+  }
+
+
 } 

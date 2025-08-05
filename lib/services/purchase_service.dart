@@ -320,13 +320,14 @@ class PurchaseService {
     print('購入状態をクリア: $productId');
   }
 
-  /// タップ倍率を取得
+  /// タップ倍率を取得（複数購入時は合計値）
   Future<int> getTapMultiplier() async {
     int multiplier = 1;
     
-    if (await isProductPurchased(tap10)) multiplier = 10;
-    if (await isProductPurchased(tap100)) multiplier = 100;
-    if (await isProductPurchased(tap1000)) multiplier = 1000;
+    // 複数のタップ購入を合計値として計算
+    if (await isProductPurchased(tap10)) multiplier += 10;
+    if (await isProductPurchased(tap100)) multiplier += 100;
+    if (await isProductPurchased(tap1000)) multiplier += 1000;
     
     return multiplier;
   }
@@ -382,11 +383,11 @@ class PurchaseService {
     if (productId == removeAds) {
       return 'バナー広告のみを非表示にします。\n（動画広告は引き続き利用可能）';
     } else if (productId == tap10) {
-      return '1回のタップで10回分の効果を獲得';
+      return '1回のタップで10回分の効果を獲得\n※永久に加算されます';
     } else if (productId == tap100) {
-      return '1回のタップで100回分の効果を獲得';
+      return '1回のタップで100回分の効果を獲得\n※永久に加算されます';
     } else if (productId == tap1000) {
-      return '1回のタップで1000回分の効果を獲得';
+      return '1回のタップで1000回分の効果を獲得\n※永久に加算されます';
     } else {
       return '効果不明';
     }

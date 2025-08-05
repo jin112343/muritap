@@ -1,5 +1,5 @@
 name: impossible_tap
-description: "絶対ムリタップ - 蓄積型の中毒系タップアプリ"
+description: "絶対ムリタップ - 蓄積型の中毒系タップアプリ。デイリーチャレンジ、アチーブメント、統計機能付き。レベルアップと称号システムで継続的な楽しさを提供。"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -61,7 +61,7 @@ dependencies:
   flutter_local_notifications: ^19.4.0
   
   # タイムゾーン（通知スケジュール用）
-  timezone: ^0.9.2
+  timezone: ^0.10.1
   
   # GameCenter & Play Games
   # games_services: ^4.1.1

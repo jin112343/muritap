@@ -131,6 +131,47 @@ class DataService {
     }
     return level;
   }
+
+  /// デイリーチャレンジの完了日時を保存
+  Future<void> saveDailyChallengeCompletedDate() async {
+    if (!_isInitialized || _prefs == null) {
+      print('DataService: 初期化されていません');
+      return;
+    }
+    
+    try {
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final timestamp = today.millisecondsSinceEpoch;
+      
+      print('DataService: デイリーチャレンジ完了日時を保存開始 - $today');
+      final result = await _prefs!.setInt('daily_challenge_completed_date', timestamp);
+      print('DataService: デイリーチャレンジ完了日時保存結果 - $result');
+      
+      print('DataService: デイリーチャレンジ完了日時保存完了');
+    } catch (e) {
+      print('Error saving daily challenge completed date: $e');
+    }
+  }
+
+  /// デイリーチャレンジが今日完了済みかチェック
+  bool isDailyChallengeCompletedToday() {
+    if (!_isInitialized || _prefs == null) return false;
+    
+    try {
+      final completedTimestamp = _prefs!.getInt('daily_challenge_completed_date');
+      if (completedTimestamp == null) return false;
+      
+      final completedDate = DateTime.fromMillisecondsSinceEpoch(completedTimestamp);
+      final today = DateTime.now();
+      final todayStart = DateTime(today.year, today.month, today.day);
+      
+      return completedDate.isAtSameMomentAs(todayStart);
+    } catch (e) {
+      print('Error checking daily challenge completion: $e');
+      return false;
+    }
+  }
   Future<void> saveCurrentLevel(int level) async {
     if (!_isInitialized || _prefs == null) return;
     

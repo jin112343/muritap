@@ -363,6 +363,17 @@ class HomeScreen extends HookWidget {
 
     // デイリーチャレンジを開始
     void startDailyChallenge() {
+      // 今日既に完了済みの場合は開始できない
+      if (DataService.instance.isDailyChallengeCompletedToday()) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('今日のデイリーチャレンジは既に完了済みです。明日また挑戦してください！'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+      
       showDailyChallenge.value = true;
       dailyChallengeProgress.value = 0;
       dailyChallengeTarget.value = 100 + (currentLevel.value * 10);
@@ -370,13 +381,16 @@ class HomeScreen extends HookWidget {
     }
 
     // デイリーチャレンジを完了
-    void completeDailyChallenge() {
+    void completeDailyChallenge() async {
       if (dailyChallengeProgress.value >= dailyChallengeTarget.value) {
         // 報酬を付与
         final reward = dailyChallengeReward.value;
         final newTotalTaps = totalTaps.value + reward;
         totalTaps.value = newTotalTaps;
-        DataService.instance.saveTotalTaps(newTotalTaps);
+        await DataService.instance.saveTotalTaps(newTotalTaps);
+        
+        // デイリーチャレンジ完了日時を保存
+        await DataService.instance.saveDailyChallengeCompletedDate();
         
         showDailyChallenge.value = false;
         
@@ -697,13 +711,24 @@ class HomeScreen extends HookWidget {
                       ],
                     ),
                   ),
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'challenge',
                     child: Row(
                       children: [
-                        Icon(Icons.emoji_events),
-                        SizedBox(width: 8),
-                        Text('デイリーチャレンジ'),
+                        Icon(
+                          DataService.instance.isDailyChallengeCompletedToday() 
+                            ? Icons.check_circle 
+                            : Icons.emoji_events,
+                          color: DataService.instance.isDailyChallengeCompletedToday() 
+                            ? Colors.green 
+                            : null,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          DataService.instance.isDailyChallengeCompletedToday() 
+                            ? 'デイリーチャレンジ（完了済み）' 
+                            : 'デイリーチャレンジ',
+                        ),
                       ],
                     ),
                   ),

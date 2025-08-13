@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:async';
+import 'dart:developer' as developer;
 import '../config/app_config.dart';
 import '../config/theme_config.dart';
 import '../services/data_service.dart';
@@ -32,6 +33,8 @@ class SettingsScreen extends HookWidget {
 
     // 通知設定の状態
     final isDailyNotificationEnabled = useState(false);
+    
+
 
     // TabControllerを作成
     final tabController = useTabController(initialLength: 3);
@@ -74,6 +77,8 @@ class SettingsScreen extends HookWidget {
 
       return () => timer.cancel;
     }, []);
+    
+
 
     return SafeArea(
       child: Column(
@@ -160,7 +165,7 @@ class SettingsScreen extends HookWidget {
       await NotificationService.instance.isDailyNotificationScheduled();
       isDailyNotificationEnabled.value = scheduled;
     } catch (e) {
-      print('初期データ読み込みエラー: $e');
+      developer.log('初期データ読み込みエラー: $e');
     }
   }
 
@@ -203,7 +208,7 @@ class SettingsScreen extends HookWidget {
       totalTaps.value = DataService.instance.getTotalTaps();
       currentLevel.value = DataService.instance.getCurrentLevel();
     } catch (e) {
-      print('統計データ更新エラー: $e');
+      developer.log('統計データ更新エラー: $e');
     }
   }
 
@@ -579,6 +584,8 @@ class SettingsScreen extends HookWidget {
     );
   }
 
+
+
   /// 購入説明カード
   Widget _buildPurchaseDescriptionCard() {
     return Card(
@@ -746,22 +753,22 @@ class SettingsScreen extends HookWidget {
                   const SizedBox(height: 16),
                   SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: isLoading.value
-                          ? null
-                          : () => _purchaseProduct(
-                        context,
-                        productId,
-                        isLoading,
-                        selectedProductId,
-                      ),
-                      icon: const Icon(Icons.payment),
-                      label: const Text('購入する'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: ThemeConfig.primaryColor,
-                        foregroundColor: Colors.white,
-                      ),
+                                      child: ElevatedButton.icon(
+                    onPressed: isLoading.value
+                        ? null
+                        : () => _purchaseProduct(
+                      context,
+                      productId,
+                      isLoading,
+                      selectedProductId,
                     ),
+                    icon: const Icon(Icons.payment),
+                    label: const Text('購入する'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ThemeConfig.primaryColor,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
                   ),
                 ] else ...[
                   const SizedBox(height: 12),
@@ -822,7 +829,7 @@ class SettingsScreen extends HookWidget {
         }
       }
     } catch (e, stackTrace) {
-      print('メール送信エラー: $e\nスタックトレース: $stackTrace');
+              developer.log('メール送信エラー: $e\nスタックトレース: $stackTrace');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -843,9 +850,9 @@ class SettingsScreen extends HookWidget {
       await prefs.remove('purchased_tap10');
       await prefs.remove('purchased_tap100');
       await prefs.remove('purchased_tap1000');
-      print('購入データをクリアしました');
-    } catch (e, stackTrace) {
-      print('購入データクリアエラー: $e\nスタックトレース: $stackTrace');
+              developer.log('購入データをクリアしました');
+      } catch (e, stackTrace) {
+        developer.log('購入データクリアエラー: $e\nスタックトレース: $stackTrace');
     }
   }
 
@@ -871,7 +878,7 @@ class SettingsScreen extends HookWidget {
         );
       }
     } catch (e, stackTrace) {
-      print('データ削除エラー: $e\nスタックトレース: $stackTrace');
+              developer.log('データ削除エラー: $e\nスタックトレース: $stackTrace');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -951,7 +958,7 @@ class SettingsScreen extends HookWidget {
         }
       }
     } catch (e, stackTrace) {
-      print('通知設定エラー: $e\nスタックトレース: $stackTrace');
+              developer.log('通知設定エラー: $e\nスタックトレース: $stackTrace');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -974,7 +981,9 @@ class SettingsScreen extends HookWidget {
     selectedProductId.value = productId;
 
     try {
-      print('実際の課金処理開始 - 商品ID: $productId');
+      developer.log('実際の課金処理開始 - 商品ID: $productId');
+      
+
 
       final success = await PurchaseService.instance
           .purchaseWithRealPayment(productId);
@@ -1001,7 +1010,7 @@ class SettingsScreen extends HookWidget {
         }
       }
     } catch (e, stackTrace) {
-      print('購入処理でエラーが発生: $e\nスタックトレース: $stackTrace');
+      developer.log('購入処理でエラーが発生: $e\nスタックトレース: $stackTrace');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1029,7 +1038,7 @@ class SettingsScreen extends HookWidget {
         );
       }
     } catch (e, stackTrace) {
-      print('購入履歴復元エラー: $e\nスタックトレース: $stackTrace');
+      developer.log('購入履歴復元エラー: $e\nスタックトレース: $stackTrace');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1051,6 +1060,10 @@ class SettingsScreen extends HookWidget {
       return 300; // 300円
     } else if (productId == PurchaseService.tap1000) {
       return 3000; // 3,000円
+    } else if (productId == PurchaseService.tap1M) {
+      return 30000; // 30,000円
+    } else if (productId == PurchaseService.tap100M) {
+      return 150000; // 150,000円
     } else {
       return 9999; // 不明な商品は最後に表示
     }

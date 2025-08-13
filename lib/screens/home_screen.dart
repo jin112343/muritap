@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'dart:async';
+import 'dart:developer' as developer;
 
 import '../config/app_config.dart';
 import '../config/theme_config.dart';
@@ -38,10 +39,167 @@ class HomeScreen extends HookWidget {
     return progress / required;
   }
 
+  // タップ数をそのまま表示（表記変換なし）
+  String _formatTapCount(int totalTaps, BuildContext context) {
+    // 最高上限: 999,999,999,999,999,999
+    const int maxValue = 999999999999999999;
+    
+    if (totalTaps > maxValue) {
+      totalTaps = maxValue;
+    }
+    
+    // 数字をそのまま返す
+    return totalTaps.toString();
+  }
+
+  // 現在のトータルタップ数で行ける最高レベルにスキップする
+  void _skipToCurrentLevel(
+    BuildContext context, 
+    int currentTotalTaps, 
+    ValueNotifier<int> totalTapsNotifier,
+    ValueNotifier<int> currentLevelNotifier,
+    ValueNotifier<bool> isLevelUpNotifier,
+    AnimationController levelUpAnimationController,
+  ) async {
+    try {
+      developer.log('=== スキップ処理開始 ===');
+      developer.log('現在のタップ数: $currentTotalTaps');
+      
+      // 現在のタップ数で行ける最高レベルを計算
+      int maxLevel = 1;
+      for (int level = 1; level <= 999; level++) {
+        final requiredTaps = DataService.instance.getRequiredTapsForLevel(level);
+        if (currentTotalTaps >= requiredTaps) {
+          maxLevel = level;
+        } else {
+          break;
+        }
+      }
+      
+      developer.log('現在のタップ数で行ける最高レベル: Lv.$maxLevel');
+      
+      // 最高レベルに到達するために必要なタップ数を計算
+      final requiredTapsForMaxLevel = DataService.instance.getRequiredTapsForLevel(maxLevel);
+      
+      developer.log('最高レベルに必要なタップ数: $requiredTapsForMaxLevel');
+      
+      // 現在のタップ数が最高レベルを超えている場合
+      if (currentTotalTaps > requiredTapsForMaxLevel) {
+        // 確認ダイアログを表示
+        final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('レベルスキップ'),
+            content: Text(
+              '現在のタップ数で行ける最高レベル（Lv.$maxLevel）までスキップしますか？\n\n'
+              '現在のタップ数: ${_formatTapCount(currentTotalTaps, context)}\n'
+              '到達可能な最高レベル: Lv.$maxLevel\n\n'
+              'スキップ後は、現在のタップ数はそのままで、レベルだけが最高レベルに設定されます。',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('キャンセル'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ThemeConfig.primaryColor,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('スキップ'),
+              ),
+            ],
+          ),
+        );
+
+        if (confirmed == true) {
+          developer.log('スキップが承認されました');
+          
+          // スキップ処理を実行（タップ数は変更せず、レベルだけを更新）
+          // 現在のタップ数で到達可能な最高レベルを計算
+          final maxAchievableLevel = DataService.instance.getMaxAchievableLevel(currentTotalTaps);
+          developer.log('現在のタップ数で到達可能な最高レベル: Lv.$maxAchievableLevel');
+          
+          // レベルを更新（タップ数は変更しない）
+          await DataService.instance.setCurrentLevel(maxAchievableLevel);
+          developer.log('レベルを設定: Lv.$maxAchievableLevel');
+          
+          // 少し待ってからレベルを再取得
+          await Future.delayed(const Duration(milliseconds: 100));
+          
+          // 現在のレベルを取得
+          final newLevel = DataService.instance.getCurrentLevel();
+          developer.log('新しいレベル: Lv.$newLevel');
+          
+          // 強制的にUIを再構築するために、状態変数を更新
+          // タップ数は変更せず、レベルとレベルアップ状態のみ更新
+          currentLevelNotifier.value = newLevel;
+          isLevelUpNotifier.value = true;
+          
+          developer.log('UIの強制再構築を実行: タップ数=${totalTapsNotifier.value}（変更なし）, レベル=${currentLevelNotifier.value}, レベルアップ=${isLevelUpNotifier.value}');
+          
+          // さらに確実にするために、もう一度少し待つ
+          await Future.delayed(const Duration(milliseconds: 50));
+          
+          // 確実にUIが更新されるように、状態変数を再度設定
+          if (context.mounted) {
+            // 強制的に再構築を促す
+            currentLevelNotifier.value = currentLevelNotifier.value;
+            isLevelUpNotifier.value = isLevelUpNotifier.value;
+            developer.log('状態変数の強制更新完了');
+          }
+          
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Lv.$maxLevelまでスキップしました！'),
+                backgroundColor: Colors.green,
+              ),
+            );
+            
+            // レベルアップアニメーションを実行
+            try {
+              levelUpAnimationController.forward();
+              developer.log('レベルアップアニメーション開始');
+            } catch (e) {
+              developer.log('レベルアップアニメーションエラー: $e');
+            }
+          }
+          
+          developer.log('=== スキップ処理完了 ===');
+        } else {
+          developer.log('スキップがキャンセルされました');
+        }
+      } else {
+        // 既に最高レベルに到達している場合
+        developer.log('既に最高レベルに到達しています');
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('既に最高レベルに到達しています。'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      developer.log('スキップ処理でエラーが発生: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('スキップ処理でエラーが発生しました: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final totalTaps = useState(DataService.instance.getTotalTaps());
-    final currentLevel = useState(DataService.instance.getCurrentLevel());
+    final totalTaps = useState(0);
+    final currentLevel = useState(1);
     final isLevelUp = useState(false);
     final isProcessingTap = useState(false); // タップ処理中フラグ
     final tapAnimationController = useAnimationController(
@@ -61,11 +219,18 @@ class HomeScreen extends HookWidget {
     // バナー広告の読み込み状態を監視
     final isBannerAdLoaded = useState(AdService.instance.isBannerAdLoaded);
     
+    // 初期データを読み込み
+    useEffect(() {
+      totalTaps.value = DataService.instance.getTotalTaps();
+      currentLevel.value = DataService.instance.getCurrentLevel();
+      developer.log('初期データ読み込み完了: タップ数=${totalTaps.value}, レベル=${currentLevel.value}');
+      return null;
+    }, []);
+    
     // 新しい機能の状態
     final showTutorial = useState(false);
     final showDailyChallenge = useState(false);
     final showAchievements = useState(false);
-    final showStats = useState(false);
     
     // デイリーチャレンジの状態
     final dailyChallengeProgress = useState(0);
@@ -130,7 +295,7 @@ class HomeScreen extends HookWidget {
 
 
     // アチーブメントを更新する関数
-    void _updateAchievements() {
+    void updateAchievements() {
       final newAchievements = <Map<String, dynamic>>[];
       
       // レベルアチーブメント
@@ -192,11 +357,12 @@ class HomeScreen extends HookWidget {
 
     // アチーブメントを更新
     useEffect(() {
-      _updateAchievements();
+      updateAchievements();
+      return null;
     }, [totalTaps.value, currentLevel.value]);
 
     // デイリーチャレンジを開始
-    void _startDailyChallenge() {
+    void startDailyChallenge() {
       showDailyChallenge.value = true;
       dailyChallengeProgress.value = 0;
       dailyChallengeTarget.value = 100 + (currentLevel.value * 10);
@@ -204,7 +370,7 @@ class HomeScreen extends HookWidget {
     }
 
     // デイリーチャレンジを完了
-    void _completeDailyChallenge() {
+    void completeDailyChallenge() {
       if (dailyChallengeProgress.value >= dailyChallengeTarget.value) {
         // 報酬を付与
         final reward = dailyChallengeReward.value;
@@ -246,73 +412,73 @@ class HomeScreen extends HookWidget {
         );
 
         if (confirmed == true) {
-          print('=== 動画再生開始 ===');
-          print('現在の総タップ数: ${totalTaps.value}');
-          print('現在の実際タップ数: ${DataService.instance.getRealTapCount()}');
-          print('現在の統計タップ数: ${await StatsService.instance.getTodayTaps()}');
-          print('現在の実際統計タップ数: ${await StatsService.instance.getTodayActualTaps()}');
+          developer.log('=== 動画再生開始 ===');
+          developer.log('現在の総タップ数: ${totalTaps.value}');
+          developer.log('現在の実際タップ数: ${DataService.instance.getRealTapCount()}');
+          developer.log('現在の統計タップ数: ${await StatsService.instance.getTodayTaps()}');
+          developer.log('現在の実際統計タップ数: ${await StatsService.instance.getTodayActualTaps()}');
           
           final success = await AdService.instance.showRewardedAd();
-          print('動画再生結果: $success');
+          developer.log('動画再生結果: $success');
           
           // 動画再生後に少し待ってから報酬状態を再確認
           await Future.delayed(const Duration(milliseconds: 1000));
           
           if (success) {
-            print('=== 動画報酬処理開始 ===');
+            developer.log('=== 動画報酬処理開始 ===');
             // 動画視聴完了時の報酬（100タップ追加）
             final rewardTaps = 100;
             final tapMultiplier = await PurchaseService.instance.getTapMultiplier();
             final actualReward = rewardTaps * tapMultiplier;
             
-            print('動画報酬計算: 基本報酬=$rewardTaps, 倍率=$tapMultiplier, 実際報酬=$actualReward');
+            developer.log('動画報酬計算: 基本報酬=$rewardTaps, 倍率=$tapMultiplier, 実際報酬=$actualReward');
             
             final currentTotalTaps = DataService.instance.getTotalTaps();
             final newTotalTaps = currentTotalTaps + actualReward;
-            print('タップ数更新: 現在=$currentTotalTaps, 追加=$actualReward, 新しい総数=$newTotalTaps');
+            developer.log('タップ数更新: 現在=$currentTotalTaps, 追加=$actualReward, 新しい総数=$newTotalTaps');
             
             // データを順次保存
             await DataService.instance.saveTotalTaps(newTotalTaps);
-            print('総タップ数保存完了');
+            developer.log('総タップ数保存完了');
             
             // 保存後の確認
             final savedTotalTaps = DataService.instance.getTotalTaps();
-            print('保存後の総タップ数確認: $savedTotalTaps');
+            developer.log('保存後の総タップ数確認: $savedTotalTaps');
             
             // 統計データを記録（実際のタップ数）
             await StatsService.instance.recordTodayTaps(actualReward);
-            print('統計タップ数記録完了');
+            developer.log('統計タップ数記録完了');
             
             // 実際のタップ数も記録（倍率なし）
             await StatsService.instance.recordTodayActualTaps(100);
-            print('実際タップ数統計記録完了');
+            developer.log('実際タップ数統計記録完了');
             
             // 実際のタップ数（倍率なし）を記録
             final currentRealTaps = DataService.instance.getRealTapCount();
             final newRealTaps = currentRealTaps + 100;
             await DataService.instance.saveRealTapCount(newRealTaps);
-            print('実際タップ数保存完了');
+            developer.log('実際タップ数保存完了');
             
             // 保存後の確認
             final savedRealTaps = DataService.instance.getRealTapCount();
-            print('保存後の実際タップ数確認: $savedRealTaps');
+            developer.log('保存後の実際タップ数確認: $savedRealTaps');
             
             // 少し待ってからUIを更新（保存の反映を待つ）
             await Future.delayed(const Duration(milliseconds: 100));
             
             // UIを更新
             totalTaps.value = DataService.instance.getTotalTaps();
-            print('UI更新後の総タップ数: ${totalTaps.value}');
+            developer.log('UI更新後の総タップ数: ${totalTaps.value}');
 
             // リワード広告を再読み込み
             await AdService.instance.loadRewardedAd();
             
             // リアルタイム更新を強制実行
             totalTaps.value = DataService.instance.getTotalTaps();
-            print('強制更新後の総タップ数: ${totalTaps.value}');
+            developer.log('強制更新後の総タップ数: ${totalTaps.value}');
             
-            print('=== 動画報酬処理完了 ===');
-            print('最終確認 - 総タップ数: ${DataService.instance.getTotalTaps()}, 実際タップ数: ${DataService.instance.getRealTapCount()}');
+            developer.log('=== 動画報酬処理完了 ===');
+            developer.log('最終確認 - 総タップ数: ${DataService.instance.getTotalTaps()}, 実際タップ数: ${DataService.instance.getRealTapCount()}');
 
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -323,7 +489,7 @@ class HomeScreen extends HookWidget {
               );
             }
           } else {
-            print('動画再生失敗 - 報酬が獲得されませんでした');
+            developer.log('動画再生失敗 - 報酬が獲得されませんでした');
             // 動画視聴に失敗した場合
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -408,7 +574,7 @@ class HomeScreen extends HookWidget {
         if (showDailyChallenge.value) {
           dailyChallengeProgress.value += tapIncrement;
           if (dailyChallengeProgress.value >= dailyChallengeTarget.value) {
-            _completeDailyChallenge();
+            completeDailyChallenge();
           }
         }
 
@@ -451,12 +617,12 @@ class HomeScreen extends HookWidget {
               final totalTapsForGameCenter = DataService.instance.getTotalTaps(); // 累計数（倍率適用後）
               final success = await GameCenterService.instance.submitScore(totalTapsForGameCenter);
               if (success) {
-                print('GameCenter: Score submitted successfully: $totalTapsForGameCenter (total taps with multiplier)');
+                developer.log('GameCenter: Score submitted successfully: $totalTapsForGameCenter (total taps with multiplier)');
               } else {
-                print('GameCenter: Failed to submit score: $totalTapsForGameCenter');
+                developer.log('GameCenter: Failed to submit score: $totalTapsForGameCenter');
               }
             } catch (e) {
-              print('GameCenter: Error submitting score: $e');
+              developer.log('GameCenter: Error submitting score: $e');
             }
           }
         } else {
@@ -467,18 +633,18 @@ class HomeScreen extends HookWidget {
                 final totalTapsForGameCenter = DataService.instance.getTotalTaps(); // 累計数（倍率適用後）
                 final success = await GameCenterService.instance.submitScore(totalTapsForGameCenter);
                 if (success) {
-                  print('GameCenter: Score submitted periodically: $totalTapsForGameCenter (total taps with multiplier)');
+                  developer.log('GameCenter: Score submitted periodically: $totalTapsForGameCenter (total taps with multiplier)');
                 } else {
-                  print('GameCenter: Failed to submit score periodically: $totalTapsForGameCenter');
+                  developer.log('GameCenter: Failed to submit score periodically: $totalTapsForGameCenter');
                 }
               } catch (e) {
-                print('GameCenter: Error submitting score periodically: $e');
+                developer.log('GameCenter: Error submitting score periodically: $e');
               }
             }
           }
         }
       } catch (e) {
-        print('Error in tap processing: $e');
+        developer.log('Error in tap processing: $e');
       } finally {
         // 処理完了後、少し待ってからフラグをリセット（デバウンス）
         Future.delayed(const Duration(milliseconds: 50), () {
@@ -511,9 +677,9 @@ class HomeScreen extends HookWidget {
                     case 'tutorial':
                       showTutorial.value = true;
                       break;
-                    case 'challenge':
-                      _startDailyChallenge();
-                      break;
+                                          case 'challenge':
+                        startDailyChallenge();
+                        break;
                     case 'achievements':
                       showAchievements.value = true;
                       break;
@@ -668,12 +834,15 @@ class HomeScreen extends HookWidget {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        Text(
-                          totalTaps.value.toString(),
-                          style: TextStyle(
-                            fontSize: 64,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            _formatTapCount(totalTaps.value, context),
+                            style: TextStyle(
+                              fontSize: 64,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -765,13 +934,46 @@ class HomeScreen extends HookWidget {
                             
                             // 既に次のレベルに達している場合
                             if (remainingTaps <= 0) {
-                              return Text(
-                                '次のレベルに到達済み！',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: ThemeConfig.primaryColor,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                              // レベル999に到達している場合はスキップボタンを非表示
+                              if (currentLevel.value >= 999) {
+                                return Text(
+                                  'レベル999に到達済み！',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: ThemeConfig.primaryColor,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                );
+                              }
+                              
+                              return Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    '次のレベルに到達済み！',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: ThemeConfig.primaryColor,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () => _skipToCurrentLevel(context, totalTaps.value, totalTaps, currentLevel, isLevelUp, levelUpAnimationController),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: ThemeConfig.primaryColor,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                      minimumSize: const Size(0, 32),
+                                    ),
+                                    child: const Text(
+                                      'スキップ',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               );
                             }
                             

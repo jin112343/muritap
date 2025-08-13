@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../config/app_config.dart';
 import 'dart:async'; // Completerを追加
+import 'dart:developer' as developer;
 import 'purchase_service.dart'; // 購入サービスをインポート
 
 /// 広告管理サービス
@@ -27,9 +28,9 @@ class AdService {
       // 広告削除状態をチェック
       await updateAdsRemovedStatus();
       
-      print('AdService initialized successfully');
+      developer.log('AdService initialized successfully');
     } catch (e) {
-      print('AdService initialization error: $e');
+      developer.log('AdService initialization error: $e');
     }
   }
 
@@ -39,7 +40,7 @@ class AdService {
       // バナー広告削除が購入されているかチェック
       await updateAdsRemovedStatus();
       if (_isBannerAdsRemoved) {
-        print('バナー広告削除が購入されているため、バナー広告を読み込みません');
+        developer.log('バナー広告削除が購入されているため、バナー広告を読み込みません');
         return;
       }
 
@@ -48,7 +49,7 @@ class AdService {
         ? AppConfig.bannerAdUnitIdIOS
         : AppConfig.bannerAdUnitIdAndroid;
       
-      print('Loading banner ad with ID: $adUnitId');
+      developer.log('Loading banner ad with ID: $adUnitId');
       
       _bannerAd = BannerAd(
         adUnitId: adUnitId,
@@ -57,26 +58,26 @@ class AdService {
         listener: BannerAdListener(
           onAdLoaded: (ad) {
             _isBannerAdLoaded = true;
-            print('Banner ad loaded successfully');
+            developer.log('Banner ad loaded successfully');
           },
           onAdFailedToLoad: (ad, error) {
             _isBannerAdLoaded = false;
             _bannerAdError = error.message;
-            print('Banner ad failed to load: $error');
+            developer.log('Banner ad failed to load: $error');
             ad.dispose();
             // 一定時間後に再読み込みを試行
             Future.delayed(const Duration(minutes: 2), () {
               if (!_isBannerAdLoaded) {
-                print('Retrying banner ad load...');
+                developer.log('Retrying banner ad load...');
                 loadBannerAd();
               }
             });
           },
           onAdOpened: (ad) {
-            print('Banner ad opened');
+            developer.log('Banner ad opened');
           },
           onAdClosed: (ad) {
-            print('Banner ad closed');
+            developer.log('Banner ad closed');
           },
         ),
       );

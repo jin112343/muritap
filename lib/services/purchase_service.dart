@@ -25,6 +25,12 @@ class PurchaseService {
   static final String tap1000 = Platform.isIOS 
     ? 'com.impossibletap.tap1000' 
     : 'android.test.refunded';
+  static final String tap1M = Platform.isIOS 
+    ? 'com.impossibletap.tap1m' 
+    : 'android.test.tap1m';
+  static final String tap100M = Platform.isIOS 
+    ? 'com.impossibletap.tap100m' 
+    : 'android.test.tap100m';
 
   /// 課金サービスを初期化
   Future<void> initialize() async {
@@ -103,6 +109,8 @@ class PurchaseService {
       tap10,
       tap100,
       tap1000,
+      tap1M,
+      tap100M,
     };
 
     print('商品読み込み開始: $productIds');
@@ -183,6 +191,15 @@ class PurchaseService {
           print('タップ倍率商品購入結果: $success');
         } catch (e) {
           print('❌ タップ倍率商品購入エラー: $e');
+          success = false;
+        }
+      } else if (product.id == tap1M || product.id == tap100M) {
+        print('🛒 高額タップ倍率商品の購入処理を開始（消費型）: ${product.id}');
+        try {
+          success = await _inAppPurchase.buyConsumable(purchaseParam: purchaseParam);
+          print('高額タップ倍率商品購入結果: $success');
+        } catch (e) {
+          print('❌ 高額タップ倍率商品購入エラー: $e');
           success = false;
         }
       }
@@ -272,6 +289,13 @@ class PurchaseService {
         return true;
       }
       
+      // 高額商品の場合は年齢確認が必要
+      if (productId == tap1M || productId == tap100M) {
+        print('高額商品の年齢確認が必要です');
+        // 年齢確認は購入画面で事前に行う必要があります
+        // ここでは年齢確認の状態をチェックするだけ
+      }
+      
       final success = await purchaseProduct(productDetails);
       if (success) {
         print('✅ 実際の課金購入リクエスト送信成功: $productId');
@@ -328,6 +352,8 @@ class PurchaseService {
     if (await isProductPurchased(tap10)) multiplier += 10;
     if (await isProductPurchased(tap100)) multiplier += 100;
     if (await isProductPurchased(tap1000)) multiplier += 1000;
+    if (await isProductPurchased(tap1M)) multiplier += 1000000; // 100万
+    if (await isProductPurchased(tap100M)) multiplier += 100000000; // 1億
     
     return multiplier;
   }
@@ -352,6 +378,10 @@ class PurchaseService {
       return '1タップ100回';
     } else if (productId == tap1000) {
       return '1タップ1000回';
+    } else if (productId == tap1M) {
+      return '1タップ100万回';
+    } else if (productId == tap100M) {
+      return '1タップ1億回';
     } else {
       return '不明な商品';
     }
@@ -373,6 +403,10 @@ class PurchaseService {
       return '300円';
     } else if (productId == tap1000) {
       return '3,000円';
+    } else if (productId == tap1M) {
+      return '30,000円';
+    } else if (productId == tap100M) {
+      return '150,000円';
     } else {
       return '価格不明';
     }
@@ -388,6 +422,10 @@ class PurchaseService {
       return '1回のタップで100回分の効果を獲得\n※永久に加算されます';
     } else if (productId == tap1000) {
       return '1回のタップで1000回分の効果を獲得\n※永久に加算されます';
+    } else if (productId == tap1M) {
+      return '1回のタップで100万回分の効果を獲得\n※永久に加算されます';
+    } else if (productId == tap100M) {
+      return '1回のタップで1億回分の効果を獲得\n※永久に加算されます';
     } else {
       return '効果不明';
     }
@@ -403,6 +441,10 @@ class PurchaseService {
       return Icons.bolt;
     } else if (productId == tap1000) {
       return Icons.electric_bolt;
+    } else if (productId == tap1M) {
+      return Icons.thunderstorm;
+    } else if (productId == tap100M) {
+      return Icons.rocket_launch;
     } else {
       return Icons.shopping_cart;
     }
@@ -418,6 +460,10 @@ class PurchaseService {
       return Colors.orange;
     } else if (productId == tap1000) {
       return Colors.red;
+    } else if (productId == tap1M) {
+      return Colors.purple;
+    } else if (productId == tap100M) {
+      return Colors.indigo;
     } else {
       return Colors.grey;
     }
@@ -426,6 +472,65 @@ class PurchaseService {
   /// プラットフォーム名を取得
   String getPlatformName() {
     return Platform.isIOS ? 'iOS' : 'Android';
+  }
+
+  /// 高額商品購入時の年齢確認ダイアログを表示
+  Future<bool> showAgeVerificationDialog(BuildContext context) async {
+    print('年齢確認ダイアログ表示開始');
+    
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        print('年齢確認ダイアログビルダー実行');
+        return AlertDialog(
+          title: const Text(
+            'あなたの年齢選択',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: const Text(
+            'あそんでいる年齢（ねんれい）によって買（か）える金額（きんがく）がきまっています。\n\n20歳以上ですか？',
+            style: TextStyle(fontSize: 16),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                print('「いいえ」ボタンが押されました');
+                Navigator.of(context).pop(false);
+              },
+              child: const Text(
+                'いいえ',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.red,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                print('「はい」ボタンが押されました');
+                Navigator.of(context).pop(true);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text(
+                'はい',
+                style: TextStyle(fontSize: 16),
+              ),
+            ),
+          ],
+        );
+      },
+    ) ?? false;
+    
+    print('年齢確認ダイアログ結果: $result');
+    print('年齢確認ダイアログ表示完了');
+    return result;
   }
 
   /// テスト用：Sandbox環境での購入処理

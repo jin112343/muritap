@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'dart:io';
 import 'dart:async'; // Timerを追加
+import 'dart:developer' as developer;
 
 import '../config/theme_config.dart';
 import '../services/game_center_service.dart';
@@ -73,7 +74,7 @@ class RankingScreen extends HookWidget {
           currentPlayerScore.value = score;
         }
       } catch (e) {
-        print('GameCenter sign in error: $e');
+        developer.log('GameCenter sign in error: $e');
       } finally {
         isLoading.value = false;
       }
@@ -103,7 +104,7 @@ class RankingScreen extends HookWidget {
           leaderboardEntries.value = entries;
           showInAppRanking.value = true;
         } catch (e) {
-          print('Error loading leaderboard entries: $e');
+          developer.log('Error loading leaderboard entries: $e');
         } finally {
           isLoading.value = false;
         }

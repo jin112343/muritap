@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'dart:developer' as developer;
 import '../services/purchase_service.dart';
 import '../config/theme_config.dart';
 
@@ -157,6 +158,26 @@ class PurchaseScreen extends HookWidget {
                   _buildProductCard(
                     context,
                     PurchaseService.tap1000,
+                    isLoading,
+                    selectedProductId,
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // 1タップ100万回
+                  _buildProductCard(
+                    context,
+                    PurchaseService.tap1M,
+                    isLoading,
+                    selectedProductId,
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // 1タップ1億回
+                  _buildProductCard(
+                    context,
+                    PurchaseService.tap100M,
                     isLoading,
                     selectedProductId,
                   ),
@@ -328,12 +349,61 @@ class PurchaseScreen extends HookWidget {
     ValueNotifier<bool> isLoading,
     ValueNotifier<String?> selectedProductId,
   ) async {
+            developer.log('=== 購入処理開始 ===');
+        developer.log('商品ID: $productId');
+        developer.log('高額商品チェック: ${productId == PurchaseService.tap1M || productId == PurchaseService.tap100M}');
+    
+    // 高額商品の場合は年齢確認ダイアログを表示
+    if (productId == PurchaseService.tap1M || productId == PurchaseService.tap100M) {
+      developer.log('=== 高額商品の年齢確認開始 ===');
+      developer.log('商品ID: $productId');
+      developer.log('商品ID比較: tap1M=${PurchaseService.tap1M}, tap100M=${PurchaseService.tap100M}');
+      developer.log('年齢確認ダイアログを表示します');
+      
+      try {
+        developer.log('年齢確認ダイアログ呼び出し前');
+        final isAgeVerified = await PurchaseService.instance.showAgeVerificationDialog(context);
+        developer.log('年齢確認結果: $isAgeVerified');
+        
+        if (!isAgeVerified) {
+          developer.log('年齢確認が拒否されました');
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('20歳未満の方は購入できません。'),
+                backgroundColor: Colors.orange,
+                duration: Duration(seconds: 3),
+              ),
+            );
+          }
+          developer.log('年齢確認拒否により購入処理を停止');
+          return;
+        }
+        developer.log('年齢確認が承認されました');
+      } catch (e) {
+        developer.log('年齢確認ダイアログでエラーが発生: $e');
+        developer.log('エラーの詳細: ${e.toString()}');
+        return;
+      }
+      developer.log('=== 高額商品の年齢確認完了 ===');
+    } else {
+      developer.log('通常商品のため年齢確認は不要');
+      developer.log('商品ID: $productId');
+      developer.log('高額商品ID: ${PurchaseService.tap1M}, ${PurchaseService.tap100M}');
+    }
+    
     isLoading.value = true;
     selectedProductId.value = productId;
     
     try {
-      print('=== 実際の課金処理開始 ===');
-      print('商品ID: $productId');
+      developer.log('=== 年齢確認後の課金処理開始 ===');
+      developer.log('商品ID: $productId');
+      
+      // 年齢確認が完了した後に購入処理を実行
+      // 高額商品の場合は年齢確認済みであることを確認
+      if (productId == PurchaseService.tap1M || productId == PurchaseService.tap100M) {
+        developer.log('年齢確認済みの高額商品の購入処理を開始');
+      }
       
       final success = await PurchaseService.instance.purchaseWithRealPayment(productId);
       
@@ -356,7 +426,7 @@ class PurchaseScreen extends HookWidget {
         }
       }
     } catch (e) {
-      print('❌ 購入処理でエラーが発生: $e');
+      developer.log('❌ 購入処理でエラーが発生: $e');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

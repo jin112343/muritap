@@ -98,6 +98,39 @@ class DataService {
   }
 
   /// 現在のレベルを保存
+  Future<void> setCurrentLevel(int level) async {
+    if (!_isInitialized || _prefs == null) {
+      print('DataService: 初期化されていません');
+      return;
+    }
+    
+    try {
+      print('DataService: レベルを保存開始 - Lv.$level');
+      final result = await _prefs!.setInt(AppConfig.keyCurrentLevel, level);
+      print('DataService: レベル保存結果 - $result');
+      
+      // 保存後の確認
+      final savedValue = _prefs!.getInt(AppConfig.keyCurrentLevel);
+      print('DataService: 保存後の確認 - Lv.$savedValue');
+      
+      print('DataService: レベル保存完了');
+    } catch (e) {
+      print('Error saving level: $e');
+    }
+  }
+
+  /// 指定されたタップ数で到達可能な最高レベルを取得
+  int getMaxAchievableLevel(int totalTaps) {
+    int level = 1;
+    while (level <= 999) {
+      final requiredTaps = getRequiredTapsForLevel(level + 1);
+      if (requiredTaps > totalTaps) {
+        break;
+      }
+      level++;
+    }
+    return level;
+  }
   Future<void> saveCurrentLevel(int level) async {
     if (!_isInitialized || _prefs == null) return;
     

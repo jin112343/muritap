@@ -122,7 +122,7 @@ class DataService {
   /// 指定されたタップ数で到達可能な最高レベルを取得
   int getMaxAchievableLevel(int totalTaps) {
     int level = 1;
-    while (level <= 999) {
+    while (level <= 999999) { // レベル上限を無制限に変更
       final requiredTaps = getRequiredTapsForLevel(level + 1);
       if (requiredTaps > totalTaps) {
         break;

@@ -78,22 +78,22 @@ class HomeScreen extends HookWidget {
       
       developer.log('現在のタップ数で行ける最高レベル: Lv.$maxLevel');
       
-      // 最高レベルに到達するために必要なタップ数を計算
-      final requiredTapsForMaxLevel = DataService.instance.getRequiredTapsForLevel(maxLevel);
-      
-      developer.log('最高レベルに必要なタップ数: $requiredTapsForMaxLevel');
-      
-      // 現在のタップ数が最高レベルを超えている場合
-      if (currentTotalTaps > requiredTapsForMaxLevel) {
+              // 現在のタップ数で到達可能な最高レベルを計算
+        final maxAchievableLevel = DataService.instance.getMaxAchievableLevel(currentTotalTaps);
+        
+        developer.log('現在のタップ数で到達可能な最高レベル: Lv.$maxAchievableLevel');
+        
+        // 現在のレベルが到達可能な最高レベルより低い場合
+        if (currentLevelNotifier.value < maxAchievableLevel) {
         // 確認ダイアログを表示
         final confirmed = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('レベルスキップ'),
             content: Text(
-              '現在のタップ数で行ける最高レベル（Lv.$maxLevel）までスキップしますか？\n\n'
+              '現在のタップ数で行ける最高レベル（Lv.$maxAchievableLevel）までスキップしますか？\n\n'
               '現在のタップ数: ${_formatTapCount(currentTotalTaps, context)}\n'
-              '到達可能な最高レベル: Lv.$maxLevel\n\n'
+              '到達可能な最高レベル: Lv.$maxAchievableLevel\n\n'
               'スキップ後は、現在のタップ数はそのままで、レベルだけが最高レベルに設定されます。',
             ),
             actions: [
@@ -153,7 +153,7 @@ class HomeScreen extends HookWidget {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Lv.$maxLevelまでスキップしました！'),
+                content: Text('Lv.$maxAchievableLevelまでスキップしました！'),
                 backgroundColor: Colors.green,
               ),
             );
@@ -934,18 +934,6 @@ class HomeScreen extends HookWidget {
                             
                             // 既に次のレベルに達している場合
                             if (remainingTaps <= 0) {
-                              // レベル999に到達している場合はスキップボタンを非表示
-                              if (currentLevel.value >= 999) {
-                                return Text(
-                                  'レベル999に到達済み！',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: ThemeConfig.primaryColor,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                );
-                              }
-                              
                               return Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [

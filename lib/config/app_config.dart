@@ -13,7 +13,7 @@ class AppConfig {
   // レベル計算パラメータ
   static const int baseTaps = 10;
   static const double growthRate = 2.0; // 1.55から2.0に変更
-  static const int maxLevel = 999;
+  static const int maxLevel = 999999; // レベル上限を無制限に変更
   
   // 広告設定 - Androidはテスト用、iOSは本番用
   static const String bannerAdUnitIdAndroid = 'ca-app-pub-3940256099942544/6300978111'; // Android テスト用

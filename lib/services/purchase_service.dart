@@ -11,6 +11,9 @@ class PurchaseService {
   final InAppPurchase _inAppPurchase = InAppPurchase.instance;
   final List<ProductDetails> _products = [];
   bool _isAvailable = false;
+  
+  // 年齢確認の状態を管理
+  bool _isAgeVerified = false;
 
   // 商品ID - プラットフォーム別
   static final String removeAds = Platform.isIOS 
@@ -247,6 +250,7 @@ class PurchaseService {
   Future<bool> purchaseWithRealPayment(String productId) async {
     try {
       print('=== 実際の課金購入開始 ===');
+      print('呼び出し元のスタックトレース: ${StackTrace.current}');
       print('商品ID: $productId');
       print('課金利用可能: $_isAvailable');
       print('読み込み済み商品数: ${_products.length}');
@@ -292,8 +296,14 @@ class PurchaseService {
       // 高額商品の場合は年齢確認が必要
       if (productId == tap1M || productId == tap100M) {
         print('高額商品の年齢確認が必要です');
-        // 年齢確認は購入画面で事前に行う必要があります
-        // ここでは年齢確認の状態をチェックするだけ
+        
+        if (!_isAgeVerified) {
+          print('❌ 年齢確認なしでの高額商品購入は許可されません');
+          print('購入画面から年齢確認を行ってください');
+          return false;
+        } else {
+          print('✅ 年齢確認済みです。購入処理を続行します');
+        }
       }
       
       final success = await purchaseProduct(productDetails);
@@ -482,7 +492,6 @@ class PurchaseService {
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        print('年齢確認ダイアログビルダー実行');
         return AlertDialog(
           title: const Text(
             'あなたの年齢選択',
@@ -527,6 +536,12 @@ class PurchaseService {
         );
       },
     ) ?? false;
+    
+    // 年齢確認が完了した場合、状態を更新
+    if (result) {
+      _isAgeVerified = true;
+      print('年齢確認状態を更新: $_isAgeVerified');
+    }
     
     print('年齢確認ダイアログ結果: $result');
     print('年齢確認ダイアログ表示完了');

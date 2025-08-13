@@ -293,23 +293,60 @@ class PurchaseScreen extends HookWidget {
                   ],
                 ),
                 
-                if (!isPurchased) ...[
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: isLoading.value 
-                        ? null 
-                        : () => _purchaseProduct(context, productId, isLoading, selectedProductId),
-                      icon: const Icon(Icons.payment),
-                      label: const Text('購入する'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: ThemeConfig.primaryColor,
-                        foregroundColor: Colors.white,
+                                  if (!isPurchased) ...[
+                    const SizedBox(height: 16),
+                    // 高額商品の場合は年齢制限の説明を追加
+                    if (productId == PurchaseService.tap1M || productId == PurchaseService.tap100M) ...[
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.orange.withValues(alpha: 0.5)),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.info_outline,
+                              color: Colors.orange,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                '20歳以上の方のみ購入可能',
+                                style: TextStyle(
+                                  color: Colors.orange,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: isLoading.value 
+                          ? null 
+                          : () {
+                              developer.log('購入ボタンが押されました: $productId');
+                              developer.log('_handlePurchaseWithAgeCheckを呼び出します');
+                              _handlePurchaseWithAgeCheck(context, productId, isLoading, selectedProductId);
+                            },
+                        icon: const Icon(Icons.payment),
+                        label: const Text('購入する'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: ThemeConfig.primaryColor,
+                          foregroundColor: Colors.white,
+                        ),
                       ),
                     ),
-                  ),
-                ] else ...[
+                  ] else ...[
                   const SizedBox(height: 12),
                   Container(
                     width: double.infinity,
@@ -343,26 +380,35 @@ class PurchaseScreen extends HookWidget {
     );
   }
 
-  Future<void> _purchaseProduct(
+  /// 年齢確認を含む購入処理
+  Future<void> _handlePurchaseWithAgeCheck(
     BuildContext context,
     String productId,
     ValueNotifier<bool> isLoading,
     ValueNotifier<String?> selectedProductId,
   ) async {
-            developer.log('=== 購入処理開始 ===');
-        developer.log('商品ID: $productId');
-        developer.log('高額商品チェック: ${productId == PurchaseService.tap1M || productId == PurchaseService.tap100M}');
+    developer.log('=== _handlePurchaseWithAgeCheck開始 ===');
+    developer.log('商品ID: $productId');
+    developer.log('高額商品チェック: ${productId == PurchaseService.tap1M || productId == PurchaseService.tap100M}');
     
-    // 高額商品の場合は年齢確認ダイアログを表示
+    // 高額商品（3万円以上）の場合は年齢確認を先に行う
     if (productId == PurchaseService.tap1M || productId == PurchaseService.tap100M) {
       developer.log('=== 高額商品の年齢確認開始 ===');
       developer.log('商品ID: $productId');
-      developer.log('商品ID比較: tap1M=${PurchaseService.tap1M}, tap100M=${PurchaseService.tap100M}');
-      developer.log('年齢確認ダイアログを表示します');
+      developer.log('tap1M: ${PurchaseService.tap1M}');
+      developer.log('tap100M: ${PurchaseService.tap100M}');
+      developer.log('商品ID比較結果: ${productId == PurchaseService.tap1M} || ${productId == PurchaseService.tap100M}');
       
       try {
-        developer.log('年齢確認ダイアログ呼び出し前');
+        developer.log('年齢確認ダイアログを表示します');
+        developer.log('PurchaseService.instance: ${PurchaseService.instance}');
+        developer.log('context: $context');
+        developer.log('context.mounted: ${context.mounted}');
+        
+        // 年齢確認ダイアログの呼び出しをテスト
+        developer.log('年齢確認ダイアログ呼び出し開始');
         final isAgeVerified = await PurchaseService.instance.showAgeVerificationDialog(context);
+        developer.log('年齢確認ダイアログ呼び出し完了');
         developer.log('年齢確認結果: $isAgeVerified');
         
         if (!isAgeVerified) {
@@ -370,9 +416,9 @@ class PurchaseScreen extends HookWidget {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('20歳未満の方は購入できません。'),
+                content: Text('年齢確認が完了していないため、購入できません。\n高額商品（3万円以上）は20歳以上の方のみ購入可能です。'),
                 backgroundColor: Colors.orange,
-                duration: Duration(seconds: 3),
+                duration: Duration(seconds: 5),
               ),
             );
           }
@@ -383,14 +429,38 @@ class PurchaseScreen extends HookWidget {
       } catch (e) {
         developer.log('年齢確認ダイアログでエラーが発生: $e');
         developer.log('エラーの詳細: ${e.toString()}');
+        developer.log('スタックトレース: ${StackTrace.current}');
         return;
       }
       developer.log('=== 高額商品の年齢確認完了 ===');
     } else {
       developer.log('通常商品のため年齢確認は不要');
       developer.log('商品ID: $productId');
-      developer.log('高額商品ID: ${PurchaseService.tap1M}, ${PurchaseService.tap100M}');
+      developer.log('tap1M: ${PurchaseService.tap1M}');
+      developer.log('tap100M: ${PurchaseService.tap100M}');
     }
+    
+    developer.log('年齢確認完了、購入処理を開始します');
+    // 年齢確認が完了したら購入処理を実行
+    await _purchaseProduct(context, productId, isLoading, selectedProductId);
+    developer.log('=== _handlePurchaseWithAgeCheck終了 ===');
+  }
+
+    Future<void> _purchaseProduct(
+    BuildContext context,
+    String productId,
+    ValueNotifier<bool> isLoading,
+    ValueNotifier<String?> selectedProductId,
+  ) async {
+    developer.log('=== _purchaseProduct開始 ===');
+    developer.log('呼び出し元のスタックトレース: ${StackTrace.current}');
+    developer.log('商品ID: $productId');
+    developer.log('高額商品チェック: ${productId == PurchaseService.tap1M || productId == PurchaseService.tap100M}');
+    
+    // 年齢確認は_handlePurchaseWithAgeCheckで既に完了しているため、ここでは行わない
+    developer.log('年齢確認は既に完了済みです');
+    developer.log('商品ID: $productId');
+    developer.log('高額商品ID: ${PurchaseService.tap1M}, ${PurchaseService.tap100M}');
     
     isLoading.value = true;
     selectedProductId.value = productId;

@@ -983,7 +983,40 @@ class SettingsScreen extends HookWidget {
     try {
       developer.log('実際の課金処理開始 - 商品ID: $productId');
       
-
+      // 高額商品（3万円以上）の場合は年齢確認を先に行う
+      if (productId == PurchaseService.tap1M || productId == PurchaseService.tap100M) {
+        developer.log('=== 高額商品の年齢確認開始（設定画面） ===');
+        developer.log('商品ID: $productId');
+        
+        try {
+          developer.log('年齢確認ダイアログを表示します');
+          final isAgeVerified = await PurchaseService.instance.showAgeVerificationDialog(context);
+          developer.log('年齢確認結果: $isAgeVerified');
+          
+          if (!isAgeVerified) {
+            developer.log('年齢確認が拒否されました');
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('年齢確認が完了していないため、購入できません。\n高額商品（3万円以上）は20歳以上の方のみ購入可能です。'),
+                  backgroundColor: Colors.orange,
+                  duration: Duration(seconds: 5),
+                ),
+              );
+            }
+            developer.log('年齢確認拒否により購入処理を停止');
+            return;
+          }
+          developer.log('年齢確認が承認されました');
+        } catch (e) {
+          developer.log('年齢確認ダイアログでエラーが発生: $e');
+          developer.log('エラーの詳細: ${e.toString()}');
+          return;
+        }
+        developer.log('=== 高額商品の年齢確認完了（設定画面） ===');
+      } else {
+        developer.log('通常商品のため年齢確認は不要');
+      }
 
       final success = await PurchaseService.instance
           .purchaseWithRealPayment(productId);

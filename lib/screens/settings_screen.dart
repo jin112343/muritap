@@ -1035,7 +1035,7 @@ class SettingsScreen extends HookWidget {
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('購入に失敗しました。詳細はコンソールログを確認してください。'),
+              content: Text('購入に失敗しました。しばらく時間をおいて再度お試しください。'),
               backgroundColor: Colors.red,
               duration: Duration(seconds: 5),
             ),
@@ -1046,8 +1046,8 @@ class SettingsScreen extends HookWidget {
       developer.log('購入処理でエラーが発生: $e\nスタックトレース: $stackTrace');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('購入エラー: $e'),
+          const SnackBar(
+            content: Text('購入処理でエラーが発生しました。しばらく時間をおいて再度お試しください。'),
             backgroundColor: Colors.red,
           ),
         );
@@ -1074,8 +1074,8 @@ class SettingsScreen extends HookWidget {
       developer.log('購入履歴復元エラー: $e\nスタックトレース: $stackTrace');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('復元に失敗しました: $e'),
+          const SnackBar(
+            content: Text('購入履歴の復元に失敗しました。しばらく時間をおいて再度お試しください。'),
             backgroundColor: Colors.red,
           ),
         );

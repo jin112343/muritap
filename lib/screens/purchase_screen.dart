@@ -488,7 +488,7 @@ class PurchaseScreen extends HookWidget {
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('購入に失敗しました。詳細はコンソールログを確認してください。'),
+              content: Text('購入に失敗しました。しばらく時間をおいて再度お試しください。'),
               backgroundColor: Colors.red,
               duration: Duration(seconds: 5),
             ),
@@ -499,8 +499,8 @@ class PurchaseScreen extends HookWidget {
       developer.log('❌ 購入処理でエラーが発生: $e');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('購入エラー: $e'),
+          const SnackBar(
+            content: Text('購入処理でエラーが発生しました。しばらく時間をおいて再度お試しください。'),
             backgroundColor: Colors.red,
           ),
         );

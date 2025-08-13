@@ -995,7 +995,8 @@ class HomeScreen extends HookWidget {
             ElevatedButton(
               onPressed: onClose,
               style: ElevatedButton.styleFrom(
-                backgroundColor: ThemeConfig.primaryColor,
+                backgroundColor: Colors.grey[700],
+                foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
@@ -1143,7 +1144,8 @@ class HomeScreen extends HookWidget {
             ElevatedButton(
               onPressed: onClose,
               style: ElevatedButton.styleFrom(
-                backgroundColor: ThemeConfig.primaryColor,
+                backgroundColor: Colors.grey[700],
+                foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),

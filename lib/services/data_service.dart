@@ -140,8 +140,31 @@ class DataService {
   int getRequiredTapsForLevel(int level) {
     if (level <= 1) return 0;
     
-    // レベル99までは成長率1.5、レベル100からは成長率2.0
-    final growthRate = level <= 99 ? 1.5 : 2.0;
+    // より滑らかで現実的な成長曲線を実現
+    double growthRate;
+    if (level <= 99) {
+      growthRate = 1.5;
+    } else if (level <= 300) {
+      // レベル99-300の間で1.5から1.6まで徐々に上げる
+      final progress = (level - 99) / (300 - 99);
+      growthRate = 1.5 + (progress * 0.1);
+    } else if (level <= 500) {
+      // レベル300-500の間で1.6から1.7まで徐々に上げる
+      final progress = (level - 300) / (500 - 300);
+      growthRate = 1.6 + (progress * 0.1);
+    } else if (level <= 750) {
+      // レベル500-750の間で1.7から1.8まで徐々に上げる
+      final progress = (level - 500) / (750 - 500);
+      growthRate = 1.7 + (progress * 0.1);
+    } else if (level <= 999) {
+      // レベル750-999の間で1.8から1.9まで徐々に上げる
+      final progress = (level - 750) / (999 - 750);
+      growthRate = 1.8 + (progress * 0.1);
+    } else {
+      // レベル999以降は2.0で固定
+      growthRate = 2.0;
+    }
+    
     return (AppConfig.baseTaps * pow(level, growthRate)).floor();
   }
 

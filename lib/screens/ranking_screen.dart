@@ -54,7 +54,12 @@ class RankingScreen extends HookWidget {
       try {
         await ShareService.instance.shareScreenshot(
           screenshotKey,
-          text: '絶対ムリタップでレベル${currentLevel.value}、総タップ数${currentTaps.value}回達成！ランキングに参加しよう！',
+          text: '''絶対ムリタップで
+レベル${currentLevel.value}で
+総タップ数${currentTaps.value}回達成！
+あなたもランキングに参加しよう！
+アプリダウンロードはこちら(ios):
+@https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
         );
       } finally {
         // 共有完了後、広告を再表示

@@ -293,18 +293,18 @@ class PurchaseService {
         return true;
       }
       
-      // 高額商品の場合は年齢確認が必要
-      if (productId == tap1M || productId == tap100M) {
-        print('高額商品の年齢確認が必要です');
-        
-        if (!_isAgeVerified) {
-          print('❌ 年齢確認なしでの高額商品購入は許可されません');
-          print('購入画面から年齢確認を行ってください');
-          return false;
-        } else {
-          print('✅ 年齢確認済みです。購入処理を続行します');
-        }
-      }
+      // 高額商品の場合は年齢確認が必要 - 一時的に無効化
+      // if (productId == tap1M || productId == tap100M) {
+      //   print('高額商品の年齢確認が必要です');
+      //   
+      //   if (!_isAgeVerified) {
+      //     print('❌ 年齢確認なしでの高額商品購入は許可されません');
+      //     print('購入画面から年齢確認を行ってください');
+      //     return false;
+      //   } else {
+      //     print('✅ 年齢確認済みです。購入処理を続行します');
+      //   }
+      // }
       
       final success = await purchaseProduct(productDetails);
       if (success) {

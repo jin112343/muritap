@@ -164,23 +164,23 @@ class PurchaseScreen extends HookWidget {
                   
                   const SizedBox(height: 16),
                   
-                  // 1タップ100万回
-                  _buildProductCard(
-                    context,
-                    PurchaseService.tap1M,
-                    isLoading,
-                    selectedProductId,
-                  ),
+                  // 1タップ100万回 (3万円) - 一時的に無効化
+                  // _buildProductCard(
+                  //   context,
+                  //   PurchaseService.tap1M,
+                  //   isLoading,
+                  //   selectedProductId,
+                  // ),
                   
-                  const SizedBox(height: 16),
+                  // const SizedBox(height: 16),
                   
-                  // 1タップ1億回
-                  _buildProductCard(
-                    context,
-                    PurchaseService.tap100M,
-                    isLoading,
-                    selectedProductId,
-                  ),
+                  // 1タップ1億回 (15万円) - 一時的に無効化
+                  // _buildProductCard(
+                  //   context,
+                  //   PurchaseService.tap100M,
+                  //   isLoading,
+                  //   selectedProductId,
+                  // ),
                   
                   const SizedBox(height: 20),
                   
@@ -391,54 +391,54 @@ class PurchaseScreen extends HookWidget {
     developer.log('商品ID: $productId');
     developer.log('高額商品チェック: ${productId == PurchaseService.tap1M || productId == PurchaseService.tap100M}');
     
-    // 高額商品（3万円以上）の場合は年齢確認を先に行う
-    if (productId == PurchaseService.tap1M || productId == PurchaseService.tap100M) {
-      developer.log('=== 高額商品の年齢確認開始 ===');
-      developer.log('商品ID: $productId');
-      developer.log('tap1M: ${PurchaseService.tap1M}');
-      developer.log('tap100M: ${PurchaseService.tap100M}');
-      developer.log('商品ID比較結果: ${productId == PurchaseService.tap1M} || ${productId == PurchaseService.tap100M}');
-      
-      try {
-        developer.log('年齢確認ダイアログを表示します');
-        developer.log('PurchaseService.instance: ${PurchaseService.instance}');
-        developer.log('context: $context');
-        developer.log('context.mounted: ${context.mounted}');
-        
-        // 年齢確認ダイアログの呼び出しをテスト
-        developer.log('年齢確認ダイアログ呼び出し開始');
-        final isAgeVerified = await PurchaseService.instance.showAgeVerificationDialog(context);
-        developer.log('年齢確認ダイアログ呼び出し完了');
-        developer.log('年齢確認結果: $isAgeVerified');
-        
-        if (!isAgeVerified) {
-          developer.log('年齢確認が拒否されました');
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('年齢確認が完了していないため、購入できません。\n高額商品（3万円以上）は20歳以上の方のみ購入可能です。'),
-                backgroundColor: Colors.orange,
-                duration: Duration(seconds: 5),
-              ),
-            );
-          }
-          developer.log('年齢確認拒否により購入処理を停止');
-          return;
-        }
-        developer.log('年齢確認が承認されました');
-      } catch (e) {
-        developer.log('年齢確認ダイアログでエラーが発生: $e');
-        developer.log('エラーの詳細: ${e.toString()}');
-        developer.log('スタックトレース: ${StackTrace.current}');
-        return;
-      }
-      developer.log('=== 高額商品の年齢確認完了 ===');
-    } else {
-      developer.log('通常商品のため年齢確認は不要');
-      developer.log('商品ID: $productId');
-      developer.log('tap1M: ${PurchaseService.tap1M}');
-      developer.log('tap100M: ${PurchaseService.tap100M}');
-    }
+    // 高額商品（3万円以上）の場合は年齢確認を先に行う - 一時的に無効化
+    // if (productId == PurchaseService.tap1M || productId == PurchaseService.tap100M) {
+    //   developer.log('=== 高額商品の年齢確認開始 ===');
+    //   developer.log('商品ID: $productId');
+    //   developer.log('tap1M: ${PurchaseService.tap1M}');
+    //   developer.log('tap100M: ${PurchaseService.tap100M}');
+    //   developer.log('商品ID比較結果: ${productId == PurchaseService.tap1M} || ${productId == PurchaseService.tap100M}');
+    //   
+    //   try {
+    //     developer.log('年齢確認ダイアログを表示します');
+    //     developer.log('PurchaseService.instance: ${PurchaseService.instance}');
+    //     developer.log('context: $context');
+    //     developer.log('context.mounted: ${context.mounted}');
+    //   
+    //       // 年齢確認ダイアログの呼び出しをテスト
+    //       developer.log('年齢確認ダイアログ呼び出し開始');
+    //       final isAgeVerified = await PurchaseService.instance.showAgeVerificationDialog(context);
+    //       developer.log('年齢確認ダイアログ呼び出し完了');
+    //       developer.log('年齢確認結果: $isAgeVerified');
+    //   
+    //       if (!isAgeVerified) {
+    //         developer.log('年齢確認が拒否されました');
+    //         if (context.mounted) {
+    //           ScaffoldMessenger.of(context).showSnackBar(
+    //             const SnackBar(
+    //               content: Text('年齢確認が完了していないため、購入できません。\n高額商品（3万円以上）は20歳以上の方のみ購入可能です。'),
+    //               backgroundColor: Colors.orange,
+    //               duration: Duration(seconds: 5),
+    //             ),
+    //           );
+    //         }
+    //         developer.log('年齢確認拒否により購入処理を停止');
+    //         return;
+    //       }
+    //       developer.log('年齢確認が承認されました');
+    //     } catch (e) {
+    //       developer.log('年齢確認ダイアログでエラーが発生: $e');
+    //       developer.log('エラーの詳細: ${e.toString()}');
+    //       developer.log('スタックトレース: ${StackTrace.current}');
+    //       return;
+    //       }
+    //       developer.log('=== 高額商品の年齢確認完了 ===');
+    //     } else {
+    //       developer.log('通常商品のため年齢確認は不要');
+    //       developer.log('商品ID: $productId');
+    //       developer.log('tap1M: ${PurchaseService.tap1M}');
+    //       developer.log('tap100M: ${PurchaseService.tap100M}');
+    //     }
     
     developer.log('年齢確認完了、購入処理を開始します');
     // 年齢確認が完了したら購入処理を実行
@@ -470,10 +470,10 @@ class PurchaseScreen extends HookWidget {
       developer.log('商品ID: $productId');
       
       // 年齢確認が完了した後に購入処理を実行
-      // 高額商品の場合は年齢確認済みであることを確認
-      if (productId == PurchaseService.tap1M || productId == PurchaseService.tap100M) {
-        developer.log('年齢確認済みの高額商品の購入処理を開始');
-      }
+      // 高額商品の場合は年齢確認済みであることを確認 - 一時的に無効化
+      // if (productId == PurchaseService.tap1M || productId == PurchaseService.tap100M) {
+      //   developer.log('年齢確認済みの高額商品の購入処理を開始');
+      // }
       
       final success = await PurchaseService.instance.purchaseWithRealPayment(productId);
       

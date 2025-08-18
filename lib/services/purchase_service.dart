@@ -412,7 +412,7 @@ class PurchaseService {
     } else if (productId == tap100) {
       return '300円';
     } else if (productId == tap1000) {
-      return '3,000円';
+      return '1,000円'; // 3,000円から1,000円に変更して価値を向上
     } else if (productId == tap1M) {
       return '30,000円';
     } else if (productId == tap100M) {

@@ -59,7 +59,7 @@ class RankingScreen extends HookWidget {
 総タップ数${currentTaps.value}回達成！
 あなたもランキングに参加しよう！
 アプリダウンロードはこちら(ios):
-@https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
+https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
         );
       } finally {
         // 共有完了後、広告を再表示

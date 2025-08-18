@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1015079927065",
+    "project_id": "muritap-3d2f5",
+    "storage_bucket": "muritap-3d2f5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1015079927065:android:3458782542e4228925d988",
+        "android_client_info": {
+          "package_name": "com.example.impossible_tap"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA75ZJ9ig5Y1xMxBnWpauqAVEztqiV7DDU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

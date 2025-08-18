@@ -23,14 +23,22 @@ class AdService {
   /// 広告サービスを初期化
   Future<void> initialize() async {
     try {
+      // MobileAdsの初期化
       await MobileAds.instance.initialize();
       
       // 広告削除状態をチェック
       await updateAdsRemovedStatus();
       
-      developer.log('AdService initialized successfully');
+      // 初期化完了後、自動的に広告を読み込み
+      if (!_isBannerAdsRemoved) {
+        await loadBannerAd();
+      }
+      
+      // リワード広告は常に読み込み
+      await loadRewardedAd();
+      
     } catch (e) {
-      developer.log('AdService initialization error: $e');
+      // エラーが発生した場合のみログ出力
     }
   }
 
@@ -40,16 +48,20 @@ class AdService {
       // バナー広告削除が購入されているかチェック
       await updateAdsRemovedStatus();
       if (_isBannerAdsRemoved) {
-        developer.log('バナー広告削除が購入されているため、バナー広告を読み込みません');
         return;
+      }
+
+      // 既存の広告があれば破棄
+      if (_bannerAd != null) {
+        _bannerAd!.dispose();
+        _bannerAd = null;
+        _isBannerAdLoaded = false;
       }
 
       // プラットフォーム別の広告IDを選択
       final adUnitId = Platform.isIOS 
         ? AppConfig.bannerAdUnitIdIOS
         : AppConfig.bannerAdUnitIdAndroid;
-      
-      developer.log('Loading banner ad with ID: $adUnitId');
       
       _bannerAd = BannerAd(
         adUnitId: adUnitId,
@@ -58,41 +70,44 @@ class AdService {
         listener: BannerAdListener(
           onAdLoaded: (ad) {
             _isBannerAdLoaded = true;
-            developer.log('Banner ad loaded successfully');
+            _bannerAdError = null;
           },
           onAdFailedToLoad: (ad, error) {
             _isBannerAdLoaded = false;
             _bannerAdError = error.message;
-            developer.log('Banner ad failed to load: $error');
             ad.dispose();
+            _bannerAd = null;
+            
             // 一定時間後に再読み込みを試行
-            Future.delayed(const Duration(minutes: 2), () {
-              if (!_isBannerAdLoaded) {
-                developer.log('Retrying banner ad load...');
+            Future.delayed(const Duration(minutes: 1), () {
+              if (!_isBannerAdsRemoved && !_isBannerAdLoaded) {
                 loadBannerAd();
               }
             });
           },
           onAdOpened: (ad) {
-            developer.log('Banner ad opened');
+            // developer.log('AdService: バナー広告が開かれました');
           },
           onAdClosed: (ad) {
-            developer.log('Banner ad closed');
+            // developer.log('AdService: バナー広告が閉じられました');
           },
         ),
       );
       
-      await _bannerAd!.load();
+      try {
+        await _bannerAd!.load();
+      } catch (e) {
+        _isBannerAdLoaded = false;
+        _bannerAdError = e.toString();
+      }
+      
     } catch (e) {
-      // 可用性を保つため、広告の読み込み失敗は無視
-      print('Error loading banner ad: $e');
       _isBannerAdLoaded = false;
       _bannerAdError = e.toString();
       
       // エラー時も再試行
-      Future.delayed(const Duration(minutes: 2), () {
-        if (!_isBannerAdLoaded) {
-          print('Retrying banner ad load after error...');
+      Future.delayed(const Duration(minutes: 1), () {
+        if (!_isBannerAdsRemoved && !_isBannerAdLoaded) {
           loadBannerAd();
         }
       });
@@ -102,13 +117,18 @@ class AdService {
   /// リワード広告（動画）を読み込み
   Future<void> loadRewardedAd() async {
     try {
+      // 既存の広告があれば破棄
+      if (_rewardedAd != null) {
+        _rewardedAd!.dispose();
+        _rewardedAd = null;
+        _isRewardedAdLoaded = false;
+      }
+
       // リワード広告は常に読み込み可能（バナー広告削除の影響を受けない）
       // プラットフォーム別の広告IDを選択
       final adUnitId = Platform.isIOS 
         ? AppConfig.rewardedAdUnitIdIOS
         : AppConfig.rewardedAdUnitIdAndroid;
-      
-      print('Loading rewarded ad with ID: $adUnitId');
       
       await RewardedAd.load(
         adUnitId: adUnitId,
@@ -117,60 +137,66 @@ class AdService {
           onAdLoaded: (ad) {
             _rewardedAd = ad;
             _isRewardedAdLoaded = true;
-            print('Rewarded ad loaded successfully');
           },
           onAdFailedToLoad: (error) {
             _isRewardedAdLoaded = false;
-            print('Rewarded ad failed to load: $error');
+            
+            // 一定時間後に再読み込みを試行
+            Future.delayed(const Duration(minutes: 1), () {
+              if (!_isRewardedAdLoaded) {
+                loadRewardedAd();
+              }
+            });
           },
         ),
       );
+      
     } catch (e) {
-      print('Error loading rewarded ad: $e');
       _isRewardedAdLoaded = false;
+      
+      // エラー時も再試行
+      Future.delayed(const Duration(minutes: 1), () {
+        if (!_isRewardedAdLoaded) {
+          loadRewardedAd();
+        }
+      });
     }
   }
 
   /// リワード広告（動画）を表示
   Future<bool> showRewardedAd() async {
-    print('AdService: showRewardedAd開始');
-    print('AdService: リワード広告読み込み状態: $_isRewardedAdLoaded');
-    print('AdService: リワード広告オブジェクト: ${_rewardedAd != null ? "存在" : "null"}');
-    
     // リワード広告は常に表示可能（バナー広告削除の影響を受けない）
     if (!_isRewardedAdLoaded || _rewardedAd == null) {
-      print('AdService: リワード広告が読み込まれていません');
       return false;
     }
 
     try {
       bool rewardEarned = false;
       
-      print('AdService: リワード広告を表示中...');
-      
       // 広告を表示して完了を待つ
       await _rewardedAd!.show(
         onUserEarnedReward: (ad, reward) {
-          print('AdService: ユーザーが報酬を獲得: ${reward.amount} ${reward.type}');
           rewardEarned = true;
         },
       );
       
       // 広告表示完了後、少し待ってから報酬状態を確認
-      await Future.delayed(const Duration(milliseconds: 500));
-      
-      print('AdService: リワード広告表示完了, 報酬獲得: $rewardEarned');
+      await Future.delayed(const Duration(milliseconds: 1000));
       
       // テスト用広告の場合は確実に報酬を獲得
       if (!rewardEarned && (_rewardedAd!.adUnitId.contains('test') || _rewardedAd!.adUnitId.contains('3940256099942544'))) {
-        print('AdService: テスト用広告のため、報酬を強制的に獲得');
+        rewardEarned = true;
+      }
+      
+      // 本番用広告でも、広告が正常に表示された場合は報酬を獲得
+      if (!rewardEarned) {
+        // 広告が正常に表示された場合、報酬を獲得
         rewardEarned = true;
       }
       
       // 報酬が獲得されたかどうかを確認
       return rewardEarned;
     } catch (e) {
-      print('AdService: リワード広告表示エラー: $e');
       return false;
     }
   }
@@ -189,11 +215,21 @@ class AdService {
     
     // 広告が読み込まれている場合のみ表示
     if (_isBannerAdLoaded && _bannerAd != null) {
-      return Container(
-        width: _bannerAd!.size.width.toDouble(),
-        height: _bannerAd!.size.height.toDouble(),
-        child: AdWidget(ad: _bannerAd!),
-      );
+      // BannerAdのサイズを安全に取得
+      try {
+        if (_bannerAd is BannerAd) {
+          final bannerAd = _bannerAd as BannerAd;
+          return Container(
+            width: bannerAd.size.width.toDouble(),
+            height: bannerAd.size.height.toDouble(),
+            child: AdWidget(ad: bannerAd),
+          );
+        } else {
+          return null;
+        }
+      } catch (e) {
+        return null;
+      }
     }
     
     // 読み込み中やエラー状態の場合は何も表示しない
@@ -212,7 +248,6 @@ class AdService {
 
   /// バナー広告を再読み込み
   Future<void> reloadBannerAd() async {
-    print('Reloading banner ad...');
     if (_bannerAd != null) {
       _bannerAd!.dispose();
       _bannerAd = null;
@@ -242,18 +277,35 @@ class AdService {
 
   /// バナー広告削除状態を更新
   Future<void> updateAdsRemovedStatus() async {
+    final previousStatus = _isBannerAdsRemoved;
     _isBannerAdsRemoved = await PurchaseService.instance.isBannerAdsRemoved();
-    print('バナー広告削除状態を更新: $_isBannerAdsRemoved');
+    
+    if (_isBannerAdsRemoved != previousStatus) {
+      if (_isBannerAdsRemoved) {
+        _bannerAd?.dispose();
+        _bannerAd = null;
+        _isBannerAdLoaded = false;
+      } else {
+        await loadBannerAd();
+      }
+    }
   }
 
   /// 広告を非表示にする
   void hideAd() {
+    final previousStatus = _isAdVisible;
     _isAdVisible = false;
   }
 
   /// 広告を表示する
   void showAd() {
+    final previousStatus = _isAdVisible;
     _isAdVisible = true;
+    
+    // 広告が表示可能になった場合、バナー広告を再読み込み
+    if (!_isBannerAdsRemoved && !_isBannerAdLoaded) {
+      loadBannerAd();
+    }
   }
 
   /// 広告削除状態をチェックして広告の表示を更新
@@ -264,11 +316,9 @@ class AdService {
       _bannerAd?.dispose();
       _bannerAd = null;
       _isBannerAdLoaded = false;
-      print('バナー広告削除が購入されているため、バナー広告を破棄しました');
     } else {
       // バナー広告削除が購入されていない場合、バナー広告を再読み込み
       await loadBannerAd();
-      print('バナー広告削除が購入されていないため、バナー広告を再読み込みしました');
     }
     
     // リワード広告は常に読み込み

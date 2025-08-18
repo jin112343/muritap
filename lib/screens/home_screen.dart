@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'dart:async';
 import 'dart:developer' as developer;
+import 'package:shared_preferences/shared_preferences.dart'; // SharedPreferencesを追加
+import 'package:in_app_review/in_app_review.dart'; // App Store評価用
 
 import '../config/app_config.dart';
 import '../config/theme_config.dart';
@@ -50,6 +52,115 @@ class HomeScreen extends HookWidget {
     
     // 数字をそのまま返す
     return totalTaps.toString();
+  }
+
+  // レベル99からレベル100になった時に評価ダイアログを表示
+  void _showRatingDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.star, color: Colors.amber, size: 28),
+              const SizedBox(width: 8),
+              const Text('レベル100達成！'),
+            ],
+          ),
+          content: const Text(
+            '🎉 おめでとうございます！レベル100に到達しました！\n\n'
+            'このアプリを楽しんでいただけましたか？\n'
+            'もし良かったら、App Storeで5つ星評価をしていただけませんか？\n\n'
+            'あなたの評価が、アプリの改善に役立ちます。',
+            style: TextStyle(fontSize: 16),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('後で'),
+            ),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.of(context).pop();
+                // App Store評価をリクエスト
+                _requestAppStoreReview();
+              },
+              icon: const Icon(Icons.star_rate),
+              label: const Text('App Storeで評価'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.amber,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // App Store評価をリクエスト
+  Future<void> _requestAppStoreReview() async {
+    try {
+      final InAppReview inAppReview = InAppReview.instance;
+      
+      if (await inAppReview.isAvailable()) {
+        await inAppReview.requestReview();
+        developer.log('App Store評価ダイアログを表示しました');
+        // 評価完了後に評価済みフラグを設定
+        await _markAsRated();
+      } else {
+        developer.log('App Store評価が利用できません');
+        // 代替手段として、App Storeページを開く
+        await inAppReview.openStoreListing();
+        // App Storeページを開いた場合も評価済みとしてマーク
+        await _markAsRated();
+      }
+    } catch (e) {
+      developer.log('App Store評価のリクエストに失敗しました: $e');
+    }
+  }
+
+  // 評価済みとしてマーク
+  Future<void> _markAsRated() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('has_rated', true);
+      await prefs.setString('rating_date', DateTime.now().toIso8601String());
+      developer.log('評価済みとしてマークしました');
+    } catch (e) {
+      developer.log('評価済みフラグの設定に失敗しました: $e');
+    }
+  }
+
+  // 評価済みかどうかをチェック
+  Future<bool> _hasUserRated() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getBool('has_rated') ?? false;
+    } catch (e) {
+      developer.log('評価状態の確認に失敗しました: $e');
+      return false;
+    }
+  }
+
+  // 評価ダイアログを表示するかチェック
+  Future<bool> _shouldShowRatingDialog() async {
+    // 既に評価済みの場合は表示しない
+    if (await _hasUserRated()) {
+      return false;
+    }
+    return true;
+  }
+
+  // 評価ダイアログを表示
+  Future<void> _showRatingDialogIfNeeded(BuildContext context) async {
+    if (await _shouldShowRatingDialog()) {
+      _showRatingDialog(context);
+    }
   }
 
   // 現在のトータルタップ数で行ける最高レベルにスキップする
@@ -564,6 +675,9 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
       isProcessingTap.value = true;
       
       try {
+        // SharedPreferencesを取得
+        final prefs = await SharedPreferences.getInstance();
+        
         // タップアニメーション
         tapAnimationController.forward().then((_) {
           tapAnimationController.reverse();
@@ -644,6 +758,16 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
               developer.log('GameCenter: Error submitting score: $e');
             }
           }
+
+          // レベル99からレベル100になった時に評価ダイアログを表示
+          if (newLevel == 100 && currentLevelForCheck == 99) {
+            // 少し待ってから評価ダイアログを表示（レベルアップ演出の後に表示）
+            Future.delayed(const Duration(seconds: 3), () {
+              if (context.mounted) {
+                _showRatingDialogIfNeeded(context);
+              }
+            });
+          }
         } else {
           // レベルアップしていない場合も、一定間隔でスコアを送信
           if (newTotalTaps % 100 == 0) { // 100タップごとに送信
@@ -659,6 +783,22 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
               } catch (e) {
                 developer.log('GameCenter: Error submitting score periodically: $e');
               }
+            }
+          }
+
+          // 実質タップ数250回目のみ評価ダイアログを表示（評価済みでない場合のみ）
+          final currentRealTaps = DataService.instance.getRealTapCount();
+          if (currentRealTaps == 250) {
+            // 既に250回目で表示済みかチェック
+            final hasShownRatingAt250 = prefs.getBool('has_shown_rating_at_250') ?? false;
+            if (!hasShownRatingAt250) {
+              Future.delayed(const Duration(seconds: 1), () {
+                if (context.mounted) {
+                  _showRatingDialogIfNeeded(context);
+                  // 250回目で表示済みフラグを設定
+                  _markRatingDialogShownAt250();
+                }
+              });
             }
           }
         }
@@ -1439,5 +1579,17 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
     return newAchievements;
   }
 
+  // 評価ダイアログを表示済みの実質タップ数を記録
+  Future<void> _markRatingDialogShown(int currentRealTaps) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('last_shown_rating_tap', currentRealTaps);
+    developer.log('評価ダイアログを表示済みの実質タップ数を記録: $currentRealTaps');
+  }
 
+  // 評価ダイアログを表示済みの実質タップ数を記録（250回目）
+  Future<void> _markRatingDialogShownAt250() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('has_shown_rating_at_250', true);
+    developer.log('評価ダイアログを250回目で表示済みとしてマークしました');
+  }
 } 

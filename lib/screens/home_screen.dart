@@ -65,11 +65,11 @@ class HomeScreen extends HookWidget {
             children: [
               Icon(Icons.star, color: Colors.amber, size: 28),
               const SizedBox(width: 8),
-              const Text('レベル100達成！'),
+              const Text('100回タップ達成！'),
             ],
           ),
           content: const Text(
-            '🎉 おめでとうございます！レベル100に到達しました！\n\n'
+            '🎉 おめでとうございます！100回タップを達成しました！\n\n'
             'このアプリを楽しんでいただけましたか？\n'
             'もし良かったら、App Storeで5つ星評価をしていただけませんか？\n\n'
             'あなたの評価が、アプリの改善に役立ちます。',
@@ -522,7 +522,7 @@ class HomeScreen extends HookWidget {
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('動画広告'),
-            content: const Text('動画広告を視聴して報酬を獲得しますか？\n\n視聴完了後、100タップを獲得できます。'),
+            content: const Text('動画広告を視聴して報酬を獲得しますか？\n\n視聴完了後、250タップを獲得できます。'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
@@ -543,84 +543,96 @@ class HomeScreen extends HookWidget {
           developer.log('現在の統計タップ数: ${await StatsService.instance.getTodayTaps()}');
           developer.log('現在の実際統計タップ数: ${await StatsService.instance.getTodayActualTaps()}');
           
-          final success = await AdService.instance.showRewardedAd();
-          developer.log('動画再生結果: $success');
-          
-          // 動画再生後に少し待ってから報酬状態を再確認
-          await Future.delayed(const Duration(milliseconds: 1000));
-          
-          if (success) {
-            developer.log('=== 動画報酬処理開始 ===');
-            // 動画視聴完了時の報酬（100タップ追加）
-            final rewardTaps = 100;
-            final tapMultiplier = await PurchaseService.instance.getTapMultiplier();
-            final actualReward = rewardTaps * tapMultiplier;
+          try {
+            final success = await AdService.instance.showRewardedAd();
+            developer.log('動画再生結果: $success');
             
-            developer.log('動画報酬計算: 基本報酬=$rewardTaps, 倍率=$tapMultiplier, 実際報酬=$actualReward');
-            
-            final currentTotalTaps = DataService.instance.getTotalTaps();
-            final newTotalTaps = currentTotalTaps + actualReward;
-            developer.log('タップ数更新: 現在=$currentTotalTaps, 追加=$actualReward, 新しい総数=$newTotalTaps');
-            
-            // データを順次保存
-            await DataService.instance.saveTotalTaps(newTotalTaps);
-            developer.log('総タップ数保存完了');
-            
-            // 保存後の確認
-            final savedTotalTaps = DataService.instance.getTotalTaps();
-            developer.log('保存後の総タップ数確認: $savedTotalTaps');
-            
-            // 統計データを記録（実際のタップ数）
-            await StatsService.instance.recordTodayTaps(actualReward);
-            developer.log('統計タップ数記録完了');
-            
-            // 実際のタップ数も記録（倍率なし）
-            await StatsService.instance.recordTodayActualTaps(100);
-            developer.log('実際タップ数統計記録完了');
-            
-            // 実際のタップ数（倍率なし）を記録
-            final currentRealTaps = DataService.instance.getRealTapCount();
-            final newRealTaps = currentRealTaps + 100;
-            await DataService.instance.saveRealTapCount(newRealTaps);
-            developer.log('実際タップ数保存完了');
-            
-            // 保存後の確認
-            final savedRealTaps = DataService.instance.getRealTapCount();
-            developer.log('保存後の実際タップ数確認: $savedRealTaps');
-            
-            // 少し待ってからUIを更新（保存の反映を待つ）
-            await Future.delayed(const Duration(milliseconds: 100));
-            
-            // UIを更新
-            totalTaps.value = DataService.instance.getTotalTaps();
-            developer.log('UI更新後の総タップ数: ${totalTaps.value}');
+            if (success) {
+              developer.log('=== 動画報酬処理開始 ===');
+              // 動画視聴完了時の報酬（250タップ追加）
+              final rewardTaps = 250;
+              final tapMultiplier = await PurchaseService.instance.getTapMultiplier();
+              final actualReward = rewardTaps * tapMultiplier;
+              
+              developer.log('動画報酬計算: 基本報酬=$rewardTaps, 倍率=$tapMultiplier, 実際報酬=$actualReward');
+              
+              final currentTotalTaps = DataService.instance.getTotalTaps();
+              final newTotalTaps = currentTotalTaps + actualReward;
+              developer.log('タップ数更新: 現在=$currentTotalTaps, 追加=$actualReward, 新しい総数=$newTotalTaps');
+              
+              // データを順次保存
+              await DataService.instance.saveTotalTaps(newTotalTaps);
+              developer.log('総タップ数保存完了');
+              
+              // 保存後の確認
+              final savedTotalTaps = DataService.instance.getTotalTaps();
+              developer.log('保存後の総タップ数確認: $savedTotalTaps');
+              
+              // 統計データを記録（実際のタップ数）
+              await StatsService.instance.recordTodayTaps(actualReward);
+              developer.log('統計タップ数記録完了');
+              
+              // 実際のタップ数も記録（倍率なし）
+              await StatsService.instance.recordTodayActualTaps(250);
+              developer.log('実際タップ数統計記録完了');
+              
+              // 実際のタップ数（倍率なし）を記録
+              final currentRealTaps = DataService.instance.getRealTapCount();
+              final newRealTaps = currentRealTaps + 250;
+              await DataService.instance.saveRealTapCount(newRealTaps);
+              developer.log('実際タップ数保存完了');
+              
+              // 保存後の確認
+              final savedRealTaps = DataService.instance.getRealTapCount();
+              developer.log('保存後の実際タップ数確認: $savedRealTaps');
+              
+              // 少し待ってからUIを更新（保存の反映を待つ）
+              await Future.delayed(const Duration(milliseconds: 100));
+              
+              // UIを更新
+              totalTaps.value = DataService.instance.getTotalTaps();
+              developer.log('UI更新後の総タップ数: ${totalTaps.value}');
 
-            // リワード広告を再読み込み
-            await AdService.instance.loadRewardedAd();
-            
-            // リアルタイム更新を強制実行
-            totalTaps.value = DataService.instance.getTotalTaps();
-            developer.log('強制更新後の総タップ数: ${totalTaps.value}');
-            
-            developer.log('=== 動画報酬処理完了 ===');
-            developer.log('最終確認 - 総タップ数: ${DataService.instance.getTotalTaps()}, 実際タップ数: ${DataService.instance.getRealTapCount()}');
+              // リワード広告を再読み込み
+              await AdService.instance.loadRewardedAd();
+              
+              // リアルタイム更新を強制実行
+              totalTaps.value = DataService.instance.getTotalTaps();
+              developer.log('強制更新後の総タップ数: ${totalTaps.value}');
+              
+              developer.log('=== 動画報酬処理完了 ===');
+              developer.log('最終確認 - 総タップ数: ${DataService.instance.getTotalTaps()}, 実際タップ数: ${DataService.instance.getRealTapCount()}');
 
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('動画視聴完了！250タップを獲得しました'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              }
+            } else {
+              developer.log('動画再生失敗 - 報酬が獲得されませんでした');
+              // 動画視聴に失敗した場合
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('動画視聴に失敗しました。報酬は獲得できませんでした。'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+              // リワード広告を再読み込み
+              await AdService.instance.loadRewardedAd();
+            }
+          } catch (e) {
+            developer.log('動画再生処理でエラーが発生: $e');
+            // エラーが発生した場合でも、報酬を付与
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('動画視聴完了！${actualReward}タップを獲得しました'),
-                  backgroundColor: Colors.green,
-                ),
-              );
-            }
-          } else {
-            developer.log('動画再生失敗 - 報酬が獲得されませんでした');
-            // 動画視聴に失敗した場合
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('動画視聴に失敗しました。報酬は獲得できませんでした。'),
-                  backgroundColor: Colors.red,
+                  content: Text('動画視聴完了！250タップを獲得しました（エラーが発生しましたが報酬は付与されます）'),
+                  backgroundColor: Colors.orange,
                 ),
               );
             }
@@ -786,17 +798,17 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
             }
           }
 
-          // 実質タップ数250回目のみ評価ダイアログを表示（評価済みでない場合のみ）
+          // 実質タップ数100回目のみ評価ダイアログを表示（評価済みでない場合のみ）
           final currentRealTaps = DataService.instance.getRealTapCount();
-          if (currentRealTaps == 250) {
-            // 既に250回目で表示済みかチェック
-            final hasShownRatingAt250 = prefs.getBool('has_shown_rating_at_250') ?? false;
-            if (!hasShownRatingAt250) {
+          if (currentRealTaps == 100) {
+            // 既に100回目で表示済みかチェック
+            final hasShownRatingAt100 = prefs.getBool('has_shown_rating_at_100') ?? false;
+            if (!hasShownRatingAt100) {
               Future.delayed(const Duration(seconds: 1), () {
                 if (context.mounted) {
                   _showRatingDialogIfNeeded(context);
-                  // 250回目で表示済みフラグを設定
-                  _markRatingDialogShownAt250();
+                  // 100回目で表示済みフラグを設定
+                  _markRatingDialogShownAt100();
                 }
               });
             }
@@ -1586,10 +1598,10 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
     developer.log('評価ダイアログを表示済みの実質タップ数を記録: $currentRealTaps');
   }
 
-  // 評価ダイアログを表示済みの実質タップ数を記録（250回目）
-  Future<void> _markRatingDialogShownAt250() async {
+  // 評価ダイアログを表示済みの実質タップ数を記録（100回目）
+  Future<void> _markRatingDialogShownAt100() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('has_shown_rating_at_250', true);
-    developer.log('評価ダイアログを250回目で表示済みとしてマークしました');
+    await prefs.setBool('has_shown_rating_at_100', true);
+    developer.log('評価ダイアログを100回目で表示済みとしてマークしました');
   }
 } 

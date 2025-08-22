@@ -1,0 +1,35 @@
+{
+  "dart.lineLength": 80,
+  "editor.rulers": [80],
+  "editor.formatOnSave": true,
+  "dart.previewFlutterUiGuides": true,
+  "dart.previewFlutterUiGuidesCustomTracking": true,
+  "dart.showTestCodeLens": true,
+  "dart.showMainCodeLens": false,
+  "dart.testAdditionalArgs": [
+    "--coverage"
+  ],
+  "coverage-gutters.coverageFileNames": [
+    "lcov.info",
+    "coverage/lcov.info"
+  ],
+  "coverage-gutters.showLineCoverage": true,
+  "coverage-gutters.showRulerCoverage": true,
+  "files.associations": {
+    "*.dart": "dart"
+  },
+  "emmet.includeLanguages": {
+    "dart": "html"
+  },
+  "dart.enableSdkFormatter": true,
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "[dart]": {
+    "editor.formatOnSave": true,
+    "editor.selectionHighlight": false,
+    "editor.suggest.snippetsPreventQuickSuggestions": false,
+    "editor.suggestSelection": "first",
+    "editor.tabCompletion": "onlySnippets",
+    "editor.wordBasedSuggestions": "off"
+  }
+}

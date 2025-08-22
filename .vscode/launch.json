@@ -1,0 +1,53 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Flutter (Debug)",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart"
+    },
+    {
+      "name": "Flutter (Profile)",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "flutterMode": "profile"
+    },
+    {
+      "name": "Flutter (Release)",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "flutterMode": "release"
+    },
+    {
+      "name": "Flutter Test (All)",
+      "type": "dart",
+      "request": "launch",
+      "program": "test/",
+      "args": [
+        "--coverage"
+      ],
+      "preLaunchTask": "flutter: pub get"
+    },
+    {
+      "name": "Flutter Test (Unit)",
+      "type": "dart",
+      "request": "launch",
+      "program": "test/unit/",
+      "args": [
+        "--coverage"
+      ]
+    },
+    {
+      "name": "Flutter Test (Widget)",
+      "type": "dart",
+      "request": "launch",
+      "program": "test/widget/",
+      "args": [
+        "--coverage"
+      ]
+    }
+  ]
+}

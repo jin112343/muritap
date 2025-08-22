@@ -2,6 +2,12 @@
 
 蓄積型の中毒系タップアプリ「MURITAP」のFlutter版です。
 
+# APP URL
+
+### ios :
+https://apps.apple.com/jp/app/%E7%B5%B6%E5%AF%BE%E3%83%A0%E3%83%AA%E3%82%BF%E3%83%83%E3%83%97/id6749277657
+
+
 
 # UI (JP)
 

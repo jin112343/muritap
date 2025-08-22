@@ -646,8 +646,8 @@ class _SettingsScreenState extends State<SettingsScreen> with TickerProviderStat
         .toList();
 
     otherProducts.sort((a, b) {
-      final priceA = _getProductPriceValue(a);
-      final priceB = _getProductPriceValue(b);
+      final priceA = _getProductPriceValue(a, context);
+      final priceB = _getProductPriceValue(b, context);
       return priceA.compareTo(priceB);
     });
 
@@ -742,7 +742,7 @@ class _SettingsScreenState extends State<SettingsScreen> with TickerProviderStat
                       )
                     else
                       Text(
-                        PurchaseService.instance.getProductPrice(productId),
+                        PurchaseService.instance.getProductPrice(productId, context),
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -814,7 +814,7 @@ class _SettingsScreenState extends State<SettingsScreen> with TickerProviderStat
       final Uri emailLaunchUri = Uri(
         scheme: 'mailto',
         path: AppConfig.supportEmail,
-        query: 'subject=${Uri.encodeComponent('絶対ムリタップ - お問い合わせ')}',
+        query: 'subject=${Uri.encodeComponent('MURITAP - お問い合わせ')}',
       );
 
       if (await canLaunchUrl(emailLaunchUri)) {
@@ -1087,23 +1087,7 @@ class _SettingsScreenState extends State<SettingsScreen> with TickerProviderStat
   }
 
   /// 商品の価格を数値で取得（ソート用）
-  static int _getProductPriceValue(String productId) {
-    if (productId == PurchaseService.removeAds) {
-      return 100; // 100円
-    } else if (productId == PurchaseService.tap10) {
-      return 100; // 100円
-    } else if (productId == PurchaseService.tap100) {
-      return 300; // 300円
-    } else if (productId == PurchaseService.tap1000) {
-      return 1000; // 1,000円
-    }
-    // else if (productId == PurchaseService.tap1M) {
-    //   return 30000; // 30,000円
-    // } else if (productId == PurchaseService.tap100M) {
-    //   return 150000; // 150,000円
-    // }
-    else {
-      return 9999; // 不明な商品は最後に表示
-    }
+  static double _getProductPriceValue(String productId, BuildContext context) {
+    return PurchaseService.instance.getProductPriceValue(productId, context);
   }
 }

@@ -284,7 +284,7 @@ class PurchaseScreen extends HookWidget {
                       const Icon(Icons.check_circle, color: Colors.green, size: 24)
                     else
                       Text(
-                        PurchaseService.instance.getProductPrice(productId),
+                        PurchaseService.instance.getProductPrice(productId, context),
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,

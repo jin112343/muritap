@@ -101,7 +101,7 @@ abstract class AppLocalizations {
   /// No description provided for @appName.
   ///
   /// In en, this message translates to:
-  /// **'Impossible Tap'**
+  /// **'MURITAP'**
   String get appName;
 
   /// No description provided for @navigationRanking.
@@ -221,7 +221,7 @@ abstract class AppLocalizations {
   /// No description provided for @rankingShareText.
   ///
   /// In en, this message translates to:
-  /// **'Achieved Level {level} with {taps} total taps in Impossible Tap!\nJoin the ranking too!\nDownload the app here (iOS):\nhttps://apps.apple.com/jp/developer/jin-mizoi/id1548623319'**
+  /// **'Achieved Level {level} with {taps} total taps in MURITAP!\nJoin the ranking too!\nDownload the app here (iOS):\nhttps://apps.apple.com/jp/developer/jin-mizoi/id1548623319'**
   String rankingShareText(Object level, Object taps);
 
   /// No description provided for @rankingNoData.
@@ -1247,7 +1247,7 @@ abstract class AppLocalizations {
   /// No description provided for @notificationAppName.
   ///
   /// In en, this message translates to:
-  /// **'Impossible Tap'**
+  /// **'MURITAP'**
   String get notificationAppName;
 
   /// No description provided for @notificationChannelName.
@@ -1265,13 +1265,13 @@ abstract class AppLocalizations {
   /// No description provided for @notificationChannelNameMain.
   ///
   /// In en, this message translates to:
-  /// **'Impossible Tap'**
+  /// **'MURITAP'**
   String get notificationChannelNameMain;
 
   /// No description provided for @notificationChannelDescriptionMain.
   ///
   /// In en, this message translates to:
-  /// **'Impossible Tap notifications'**
+  /// **'MURITAP notifications'**
   String get notificationChannelDescriptionMain;
 
   /// No description provided for @notificationMessage1.
@@ -1565,19 +1565,19 @@ abstract class AppLocalizations {
   /// No description provided for @shareDefaultText.
   ///
   /// In en, this message translates to:
-  /// **'Playing Impossible Tap!'**
+  /// **'Playing MURITAP!'**
   String get shareDefaultText;
 
   /// No description provided for @shareAppSubject.
   ///
   /// In en, this message translates to:
-  /// **'Impossible Tap'**
+  /// **'MURITAP'**
   String get shareAppSubject;
 
   /// No description provided for @shareAppInfo.
   ///
   /// In en, this message translates to:
-  /// **'Impossible Tap\n\n🎮 Addictive tap game\n📈 Level up to earn titles\n🏆 Compete in rankings\n🎁 Earn rewards by watching videos\n💰 Increase tap multiplier with purchases\n\n#ImpossibleTap #TapGame #Game'**
+  /// **'MURITAP\n\n🎮 Addictive tap game\n📈 Level up to earn titles\n🏆 Compete in rankings\n🎁 Earn rewards by watching videos\n💰 Increase tap multiplier with purchases\n\n#MURITAP #TapGame #Game'**
   String get shareAppInfo;
 
   /// No description provided for @levelDisplayNextLevel.
@@ -2342,22 +2342,64 @@ abstract class AppLocalizations {
   /// **'Get 1000 taps effect with 1 tap\n※Permanently added'**
   String get purchaseTap1000Description;
 
+  /// No description provided for @priceRemoveAds.
+  ///
+  /// In en, this message translates to:
+  /// **'\$0.99'**
+  String get priceRemoveAds;
+
+  /// No description provided for @priceTap10.
+  ///
+  /// In en, this message translates to:
+  /// **'\$0.99'**
+  String get priceTap10;
+
+  /// No description provided for @priceTap100.
+  ///
+  /// In en, this message translates to:
+  /// **'\$2.99'**
+  String get priceTap100;
+
+  /// No description provided for @priceTap1000.
+  ///
+  /// In en, this message translates to:
+  /// **'\$9.99'**
+  String get priceTap1000;
+
+  /// No description provided for @priceUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Price unknown'**
+  String get priceUnknown;
+
+  /// No description provided for @currency.
+  ///
+  /// In en, this message translates to:
+  /// **'USD'**
+  String get currency;
+
+  /// No description provided for @currencySymbol.
+  ///
+  /// In en, this message translates to:
+  /// **'\$'**
+  String get currencySymbol;
+
   /// No description provided for @notificationGeneralChannelName.
   ///
   /// In en, this message translates to:
-  /// **'Impossible Tap'**
+  /// **'MURITAP'**
   String get notificationGeneralChannelName;
 
   /// No description provided for @notificationGeneralChannelDescription.
   ///
   /// In en, this message translates to:
-  /// **'Impossible Tap notifications'**
+  /// **'MURITAP notifications'**
   String get notificationGeneralChannelDescription;
 
   /// No description provided for @homeShareText.
   ///
   /// In en, this message translates to:
-  /// **'Achieved level {level} with {totalTaps} total taps in Impossible Tap!\nJoin the ranking too!\nApp download (iOS):\nhttps://apps.apple.com/jp/developer/jin-mizoi/id1548623319'**
+  /// **'Achieved level {level} with {totalTaps} total taps in MURITAP!\nJoin the ranking too!\nApp download (iOS):\nhttps://apps.apple.com/jp/developer/jin-mizoi/id1548623319'**
   String homeShareText(Object level, Object totalTaps);
 }
 

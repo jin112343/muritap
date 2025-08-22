@@ -441,30 +441,71 @@ class PurchaseService {
   }
 
   /// 商品の価格を取得（実際の商品情報から）
-  String getProductPrice(String productId, {String? priceUnknown}) {
+  String getProductPrice(String productId, BuildContext context, {String? priceUnknown}) {
     final productDetails = getProductDetails(productId);
     if (productDetails != null) {
       return productDetails.price;
     }
     
-    // フォールバック用の価格
+    // ローカライゼーションされた価格を取得
     if (productId == removeAds) {
-      return '100円';
+      return AppLocalizations.of(context)!.priceRemoveAds;
     } else if (productId == tap10) {
-      return '100円'; // 160円から100円に変更
+      return AppLocalizations.of(context)!.priceTap10;
     } else if (productId == tap100) {
-      return '300円';
+      return AppLocalizations.of(context)!.priceTap100;
     } else if (productId == tap1000) {
-      return '1,000円'; // 3,000円から1,000円に変更して価値を向上
+      return AppLocalizations.of(context)!.priceTap1000;
     }
     // else if (productId == tap1M) {
-    //   return '30,000円';
+    //   return AppLocalizations.of(context)!.priceTap1M;
     // } else if (productId == tap100M) {
-    //   return '150,000円';
+    //   return AppLocalizations.of(context)!.priceTap100M;
     // }
     else {
-      return priceUnknown ?? '価格不明';
+      return priceUnknown ?? AppLocalizations.of(context)!.priceUnknown;
     }
+  }
+
+  /// 通貨に応じた価格を取得（数値比較用）
+  double getProductPriceValue(String productId, BuildContext context) {
+    final locale = Localizations.localeOf(context).languageCode;
+    
+    if (locale == 'en') {
+      // 英語環境（USD）
+      if (productId == removeAds) {
+        return 0.99;
+      } else if (productId == tap10) {
+        return 0.99;
+      } else if (productId == tap100) {
+        return 2.99;
+      } else if (productId == tap1000) {
+        return 9.99;
+      }
+      // else if (productId == tap1M) {
+      //   return 29.99;
+      // } else if (productId == tap100M) {
+      //   return 149.99;
+      // }
+    } else {
+      // 日本語環境（JPY）
+      if (productId == removeAds) {
+        return 100.0;
+      } else if (productId == tap10) {
+        return 100.0;
+      } else if (productId == tap100) {
+        return 300.0;
+      } else if (productId == tap1000) {
+        return 1000.0;
+      }
+      // else if (productId == tap1M) {
+      //   return 30000.0;
+      // } else if (productId == tap100M) {
+      //   return 150000.0;
+      // }
+    }
+    
+    return 9999.0; // 不明な商品は最後に表示
   }
 
   /// 商品の説明を取得

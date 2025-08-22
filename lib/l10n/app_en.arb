@@ -1,7 +1,7 @@
 {
   "@@locale": "en",
   
-  "appName": "Impossible Tap",
+  "appName": "MURITAP",
   
   "navigationRanking": "Ranking",
   "navigationHome": "Home",
@@ -24,7 +24,7 @@
   "rankingShowLeaderboard": "Show Leaderboard",
   "rankingInAppRanking": "In-App Ranking",
   "rankingShare": "Share",
-  "rankingShareText": "Achieved Level {level} with {taps} total taps in Impossible Tap!\nJoin the ranking too!\nDownload the app here (iOS):\nhttps://apps.apple.com/jp/developer/jin-mizoi/id1548623319",
+  "rankingShareText": "Achieved Level {level} with {taps} total taps in MURITAP!\nJoin the ranking too!\nDownload the app here (iOS):\nhttps://apps.apple.com/jp/developer/jin-mizoi/id1548623319",
   "rankingNoData": "No ranking data available",
   "rankingLoading": "Loading...",
   "rankingError": "Error occurred",
@@ -214,11 +214,11 @@
   "weekdaySaturday": "Sat",
   "weekdaySunday": "Sun",
   
-  "notificationAppName": "Impossible Tap",
+  "notificationAppName": "MURITAP",
   "notificationChannelName": "Daily Reminder",
   "notificationChannelDescription": "Daily 8 PM tap reminder",
-  "notificationChannelNameMain": "Impossible Tap",
-  "notificationChannelDescriptionMain": "Impossible Tap notifications",
+  "notificationChannelNameMain": "MURITAP",
+  "notificationChannelDescriptionMain": "MURITAP notifications",
   
   "notificationMessage1": "Haven't tapped today?",
   "notificationMessage2": "It's time to tap!",
@@ -274,9 +274,9 @@
   "ageVerificationYes": "Yes",
   "ageVerificationNo": "No",
   
-  "shareDefaultText": "Playing Impossible Tap!",
-  "shareAppSubject": "Impossible Tap",
-  "shareAppInfo": "Impossible Tap\n\n🎮 Addictive tap game\n📈 Level up to earn titles\n🏆 Compete in rankings\n🎁 Earn rewards by watching videos\n💰 Increase tap multiplier with purchases\n\n#ImpossibleTap #TapGame #Game",
+  "shareDefaultText": "Playing MURITAP!",
+  "shareAppSubject": "MURITAP",
+  "shareAppInfo": "MURITAP\n\n🎮 Addictive tap game\n📈 Level up to earn titles\n🏆 Compete in rankings\n🎁 Earn rewards by watching videos\n💰 Increase tap multiplier with purchases\n\n#MURITAP #TapGame #Game",
   
   "levelDisplayNextLevel": "To Next Level",
   "levelDisplayLevel": "Lv.",
@@ -459,6 +459,15 @@
   "purchaseTap100Description": "Get 100 taps effect with 1 tap\n※Permanently added",
   "purchaseTap1000Description": "Get 1000 taps effect with 1 tap\n※Permanently added",
   
+  "priceRemoveAds": "$0.99",
+  "priceTap10": "$0.99",
+  "priceTap100": "$2.99",
+  "priceTap1000": "$9.99",
+  "priceUnknown": "Price unknown",
+  
+  "currency": "USD",
+  "currencySymbol": "$",
+  
   "titleGod": "Tap God",
   "titleSage": "Tap Sage",
   "titleMaster": "Tap Master",
@@ -469,12 +478,12 @@
   "titleApprentice": "Apprentice",
   "titleNewbie": "Newbie",
   
-  "notificationAppName": "Impossible Tap",
+  "notificationAppName": "MURITAP",
   "notificationChannelName": "Daily Reminder",
   "notificationChannelDescription": "Daily tap reminder at 8 PM",
   
-  "notificationGeneralChannelName": "Impossible Tap",
-  "notificationGeneralChannelDescription": "Impossible Tap notifications",
+  "notificationGeneralChannelName": "MURITAP",
+  "notificationGeneralChannelDescription": "MURITAP notifications",
   
-  "homeShareText": "Achieved level {level} with {totalTaps} total taps in Impossible Tap!\nJoin the ranking too!\nApp download (iOS):\nhttps://apps.apple.com/jp/developer/jin-mizoi/id1548623319"
+  "homeShareText": "Achieved level {level} with {totalTaps} total taps in MURITAP!\nJoin the ranking too!\nApp download (iOS):\nhttps://apps.apple.com/jp/developer/jin-mizoi/id1548623319"
 }

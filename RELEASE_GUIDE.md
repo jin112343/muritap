@@ -1,6 +1,6 @@
 # Androidリリース版作成ガイド
 
-このガイドでは、Flutterアプリ「絶対ムリタップ」のAndroidリリース版を作成する手順を説明します。
+このガイドでは、Flutterアプリ「MURITAP」のAndroidリリース版を作成する手順を説明します。
 
 ## 📋 前提条件
 
@@ -58,7 +58,7 @@ applicationId = "com.example.impossible_tap"  # 実際のアプリIDに変更
 
 #### アプリ名（`android/app/src/main/AndroidManifest.xml`）
 ```xml
-android:label="絶対ムリタップ"
+android:label="MURITAP"
 ```
 
 ### 4. リリース版のビルド
@@ -104,7 +104,7 @@ build/app/outputs/flutter-apk/app-release.apk
 ### 2. 新しいアプリを作成
 
 1. 「アプリを作成」をクリック
-2. アプリ名を入力（例：「絶対ムリタップ」）
+2. アプリ名を入力（例：「MURITAP」）
 3. アプリの種類を選択（ゲーム）
 4. 無料か有料かを選択
 

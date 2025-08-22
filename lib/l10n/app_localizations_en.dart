@@ -9,7 +9,7 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appName => 'Impossible Tap';
+  String get appName => 'MURITAP';
 
   @override
   String get navigationRanking => 'Ranking';
@@ -71,7 +71,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String rankingShareText(Object level, Object taps) {
-    return 'Achieved Level $level with $taps total taps in Impossible Tap!\nJoin the ranking too!\nDownload the app here (iOS):\nhttps://apps.apple.com/jp/developer/jin-mizoi/id1548623319';
+    return 'Achieved Level $level with $taps total taps in MURITAP!\nJoin the ranking too!\nDownload the app here (iOS):\nhttps://apps.apple.com/jp/developer/jin-mizoi/id1548623319';
   }
 
   @override
@@ -636,7 +636,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get weekdaySunday => 'Sun';
 
   @override
-  String get notificationAppName => 'Impossible Tap';
+  String get notificationAppName => 'MURITAP';
 
   @override
   String get notificationChannelName => 'Daily Reminder';
@@ -645,11 +645,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notificationChannelDescription => 'Daily tap reminder at 8 PM';
 
   @override
-  String get notificationChannelNameMain => 'Impossible Tap';
+  String get notificationChannelNameMain => 'MURITAP';
 
   @override
-  String get notificationChannelDescriptionMain =>
-      'Impossible Tap notifications';
+  String get notificationChannelDescriptionMain => 'MURITAP notifications';
 
   @override
   String get notificationMessage1 => 'Haven\'t tapped today?';
@@ -803,14 +802,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ageVerificationNo => 'No';
 
   @override
-  String get shareDefaultText => 'Playing Impossible Tap!';
+  String get shareDefaultText => 'Playing MURITAP!';
 
   @override
-  String get shareAppSubject => 'Impossible Tap';
+  String get shareAppSubject => 'MURITAP';
 
   @override
   String get shareAppInfo =>
-      'Impossible Tap\n\n🎮 Addictive tap game\n📈 Level up to earn titles\n🏆 Compete in rankings\n🎁 Earn rewards by watching videos\n💰 Increase tap multiplier with purchases\n\n#ImpossibleTap #TapGame #Game';
+      'MURITAP\n\n🎮 Addictive tap game\n📈 Level up to earn titles\n🏆 Compete in rankings\n🎁 Earn rewards by watching videos\n💰 Increase tap multiplier with purchases\n\n#MURITAP #TapGame #Game';
 
   @override
   String get levelDisplayNextLevel => 'To Next Level';
@@ -1236,14 +1235,34 @@ class AppLocalizationsEn extends AppLocalizations {
       'Get 1000 taps effect with 1 tap\n※Permanently added';
 
   @override
-  String get notificationGeneralChannelName => 'Impossible Tap';
+  String get priceRemoveAds => '\$0.99';
 
   @override
-  String get notificationGeneralChannelDescription =>
-      'Impossible Tap notifications';
+  String get priceTap10 => '\$0.99';
+
+  @override
+  String get priceTap100 => '\$2.99';
+
+  @override
+  String get priceTap1000 => '\$9.99';
+
+  @override
+  String get priceUnknown => 'Price unknown';
+
+  @override
+  String get currency => 'USD';
+
+  @override
+  String get currencySymbol => '\$';
+
+  @override
+  String get notificationGeneralChannelName => 'MURITAP';
+
+  @override
+  String get notificationGeneralChannelDescription => 'MURITAP notifications';
 
   @override
   String homeShareText(Object level, Object totalTaps) {
-    return 'Achieved level $level with $totalTaps total taps in Impossible Tap!\nJoin the ranking too!\nApp download (iOS):\nhttps://apps.apple.com/jp/developer/jin-mizoi/id1548623319';
+    return 'Achieved level $level with $totalTaps total taps in MURITAP!\nJoin the ranking too!\nApp download (iOS):\nhttps://apps.apple.com/jp/developer/jin-mizoi/id1548623319';
   }
 }

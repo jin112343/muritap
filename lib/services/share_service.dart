@@ -42,8 +42,8 @@ class ShareService {
       // 共有
       await Share.shareXFiles(
         [XFile(file.path)],
-        text: text ?? '絶対ムリタップで遊んでいます！',
-        subject: subject ?? '絶対ムリタップ',
+        text: text ?? 'MURITAPで遊んでいます！',
+        subject: subject ?? 'MURITAP',
       );
     } catch (e) {
       print('Error sharing screenshot: $e');
@@ -53,7 +53,7 @@ class ShareService {
   /// アプリの情報を共有
   Future<void> shareAppInfo({String? appInfo, String? subject}) async {
     final defaultAppInfo = '''
-絶対ムリタップ
+MURITAP
 
 🎮 中毒性抜群のタップゲーム
 📈 レベルアップで称号獲得
@@ -61,9 +61,9 @@ class ShareService {
 🎁 動画視聴で報酬獲得
 💰 課金でタップ倍率アップ
 
-#絶対ムリタップ #タップゲーム #ゲーム
+#MURITAP #タップゲーム #ゲーム
 ''';
 
-    await shareText(appInfo ?? defaultAppInfo, subject: subject ?? '絶対ムリタップ');
+    await shareText(appInfo ?? defaultAppInfo, subject: subject ?? 'MURITAP');
   }
 } 

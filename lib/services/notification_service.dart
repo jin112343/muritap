@@ -138,7 +138,7 @@ class NotificationService {
       
       await _flutterLocalNotificationsPlugin.zonedSchedule(
         1001, // 通知ID
-        appName ?? 'Impossible Tap', // デフォルトは英語
+        appName ?? 'MURITAP', // デフォルトは英語
         _getRandomMotivationalMessage(), // メッセージ
         tz.TZDateTime.from(targetDate, tz.local),
         NotificationDetails(

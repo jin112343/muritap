@@ -1,7 +1,7 @@
-{
+　{
   "@@locale": "ja",
   
-  "appName": "絶対ムリタップ",
+  "appName": "MURITAP",
   
   "navigationRanking": "ランキング",
   "navigationHome": "ホーム",
@@ -24,7 +24,7 @@
   "rankingShowLeaderboard": "リーダーボードを表示",
   "rankingInAppRanking": "アプリ内ランキング",
   "rankingShare": "共有",
-  "rankingShareText": "絶対ムリタップで\nレベル{level}で\n総タップ数{taps}回達成！\nあなたもランキングに参加しよう！\nアプリダウンロードはこちら(ios):\nhttps://apps.apple.com/jp/developer/jin-mizoi/id1548623319",
+  "rankingShareText": "MURITAPで\nレベル{level}で\n総タップ数{taps}回達成！\nあなたもランキングに参加しよう！\nアプリダウンロードはこちら(ios):\nhttps://apps.apple.com/jp/developer/jin-mizoi/id1548623319",
   "rankingNoData": "ランキングデータがありません",
   "rankingLoading": "読み込み中...",
   "rankingError": "エラーが発生しました",
@@ -214,11 +214,11 @@
   "weekdaySaturday": "土",
   "weekdaySunday": "日",
   
-  "notificationAppName": "絶対ムリタップ",
+  "notificationAppName": "MURITAP",
   "notificationChannelName": "毎日のリマインダー",
   "notificationChannelDescription": "毎日20時のタップリマインダー",
-  "notificationChannelNameMain": "絶対ムリタップ",
-  "notificationChannelDescriptionMain": "絶対ムリタップの通知",
+  "notificationChannelNameMain": "MURITAP",
+  "notificationChannelDescriptionMain": "MURITAPの通知",
   
   "notificationMessage1": "今日はタップしないの？",
   "notificationMessage2": "タップする時間ですよ！",
@@ -267,16 +267,23 @@
   "productDescriptionTap100M": "1回のタップで1億回分の効果を獲得\n※永久に加算されます",
   "productDescriptionUnknown": "効果不明",
   
-  "productPriceUnknown": "価格不明",
+  "priceRemoveAds": "100円",
+  "priceTap10": "100円",
+  "priceTap100": "300円",
+  "priceTap1000": "1,000円",
+  "priceUnknown": "価格不明",
+  
+  "currency": "JPY",
+  "currencySymbol": "¥",
   
   "ageVerificationTitle": "あなたの年齢選択",
   "ageVerificationContent": "あそんでいる年齢（ねんれい）によって買（か）える金額（きんがく）がきまっています。\n\n20歳以上ですか？",
   "ageVerificationYes": "はい",
   "ageVerificationNo": "いいえ",
   
-  "shareDefaultText": "絶対ムリタップで遊んでいます！",
-  "shareAppSubject": "絶対ムリタップ",
-  "shareAppInfo": "絶対ムリタップ\n\n🎮 中毒性抜群のタップゲーム\n📈 レベルアップで称号獲得\n🏆 ランキングで競争\n🎁 動画視聴で報酬獲得\n💰 課金でタップ倍率アップ\n\n#絶対ムリタップ #タップゲーム #ゲーム",
+  "shareDefaultText": "MURITAPで遊んでいます！",
+  "shareAppSubject": "MURITAP",
+  "shareAppInfo": "MURITAP\n\n🎮 中毒性抜群のタップゲーム\n📈 レベルアップで称号獲得\n🏆 ランキングで競争\n🎁 動画視聴で報酬獲得\n💰 課金でタップ倍率アップ\n\n#MURITAP #タップゲーム #ゲーム",
   
   "levelDisplayNextLevel": "次のレベルまで",
   "levelDisplayLevel": "Lv.",
@@ -468,12 +475,12 @@
   "titleApprentice": "見習い",
   "titleNewbie": "新米",
   
-  "notificationAppName": "絶対ムリタップ",
+  "notificationAppName": "MURITAP",
   "notificationChannelName": "毎日のリマインダー",
   "notificationChannelDescription": "毎日20時のタップリマインダー",
   
-  "notificationGeneralChannelName": "絶対ムリタップ",
-  "notificationGeneralChannelDescription": "絶対ムリタップの通知",
+  "notificationGeneralChannelName": "MURITAP",
+  "notificationGeneralChannelDescription": "MURITAPの通知",
   
-  "homeShareText": "絶対ムリタップで\nレベル{level}で\n総タップ数{totalTaps}回達成！\nあなたもランキングに参加しよう！\nアプリダウンロードはこちら(ios):\nhttps://apps.apple.com/jp/developer/jin-mizoi/id1548623319"
+  "homeShareText": "MURITAPで\nレベル{level}で\n総タップ数{totalTaps}回達成！\nあなたもランキングに参加しよう！\nアプリダウンロードはこちら(ios):\nhttps://apps.apple.com/jp/developer/jin-mizoi/id1548623319"
 }

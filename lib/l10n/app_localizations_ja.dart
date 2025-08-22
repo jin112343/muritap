@@ -9,7 +9,7 @@ class AppLocalizationsJa extends AppLocalizations {
   AppLocalizationsJa([String locale = 'ja']) : super(locale);
 
   @override
-  String get appName => '絶対ムリタップ';
+  String get appName => 'MURITAP';
 
   @override
   String get navigationRanking => 'ランキング';
@@ -71,7 +71,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String rankingShareText(Object level, Object taps) {
-    return '絶対ムリタップで\nレベル$levelで\n総タップ数$taps回達成！\nあなたもランキングに参加しよう！\nアプリダウンロードはこちら(ios):\nhttps://apps.apple.com/jp/developer/jin-mizoi/id1548623319';
+    return 'MURITAPで\nレベル$levelで\n総タップ数$taps回達成！\nあなたもランキングに参加しよう！\nアプリダウンロードはこちら(ios):\nhttps://apps.apple.com/jp/developer/jin-mizoi/id1548623319';
   }
 
   @override
@@ -619,7 +619,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get weekdaySunday => '日';
 
   @override
-  String get notificationAppName => '絶対ムリタップ';
+  String get notificationAppName => 'MURITAP';
 
   @override
   String get notificationChannelName => '毎日のリマインダー';
@@ -628,10 +628,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get notificationChannelDescription => '毎日20時のタップリマインダー';
 
   @override
-  String get notificationChannelNameMain => '絶対ムリタップ';
+  String get notificationChannelNameMain => 'MURITAP';
 
   @override
-  String get notificationChannelDescriptionMain => '絶対ムリタップの通知';
+  String get notificationChannelDescriptionMain => 'MURITAPの通知';
 
   @override
   String get notificationMessage1 => '今日はタップしないの？';
@@ -763,7 +763,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get productDescriptionUnknown => '効果不明';
 
   @override
-  String get productPriceUnknown => '価格不明';
+  String get productPriceUnknown => 'Price unknown';
 
   @override
   String get ageVerificationTitle => 'あなたの年齢選択';
@@ -779,14 +779,14 @@ class AppLocalizationsJa extends AppLocalizations {
   String get ageVerificationNo => 'いいえ';
 
   @override
-  String get shareDefaultText => '絶対ムリタップで遊んでいます！';
+  String get shareDefaultText => 'MURITAPで遊んでいます！';
 
   @override
-  String get shareAppSubject => '絶対ムリタップ';
+  String get shareAppSubject => 'MURITAP';
 
   @override
   String get shareAppInfo =>
-      '絶対ムリタップ\n\n🎮 中毒性抜群のタップゲーム\n📈 レベルアップで称号獲得\n🏆 ランキングで競争\n🎁 動画視聴で報酬獲得\n💰 課金でタップ倍率アップ\n\n#絶対ムリタップ #タップゲーム #ゲーム';
+      'MURITAP\n\n🎮 中毒性抜群のタップゲーム\n📈 レベルアップで称号獲得\n🏆 ランキングで競争\n🎁 動画視聴で報酬獲得\n💰 課金でタップ倍率アップ\n\n#MURITAP #タップゲーム #ゲーム';
 
   @override
   String get levelDisplayNextLevel => '次のレベルまで';
@@ -1201,13 +1201,34 @@ class AppLocalizationsJa extends AppLocalizations {
   String get purchaseTap1000Description => '1回のタップで1000回分の効果を獲得\n※永久に加算されます';
 
   @override
-  String get notificationGeneralChannelName => '絶対ムリタップ';
+  String get priceRemoveAds => '100円';
 
   @override
-  String get notificationGeneralChannelDescription => '絶対ムリタップの通知';
+  String get priceTap10 => '100円';
+
+  @override
+  String get priceTap100 => '300円';
+
+  @override
+  String get priceTap1000 => '1,000円';
+
+  @override
+  String get priceUnknown => '価格不明';
+
+  @override
+  String get currency => 'JPY';
+
+  @override
+  String get currencySymbol => '¥';
+
+  @override
+  String get notificationGeneralChannelName => 'MURITAP';
+
+  @override
+  String get notificationGeneralChannelDescription => 'MURITAPの通知';
 
   @override
   String homeShareText(Object level, Object totalTaps) {
-    return '絶対ムリタップで\nレベル$levelで\n総タップ数$totalTaps回達成！\nあなたもランキングに参加しよう！\nアプリダウンロードはこちら(ios):\nhttps://apps.apple.com/jp/developer/jin-mizoi/id1548623319';
+    return 'MURITAPで\nレベル$levelで\n総タップ数$totalTaps回達成！\nあなたもランキングに参加しよう！\nアプリダウンロードはこちら(ios):\nhttps://apps.apple.com/jp/developer/jin-mizoi/id1548623319';
   }
 }

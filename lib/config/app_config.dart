@@ -2,7 +2,7 @@
 /// 機密性を保つため、設定値を一元管理
 class AppConfig {
   // アプリケーション基本情報
-  static const String appName = '絶対ムリタップ';
+  static const String appName = 'MURITAP';
   static const String appVersion = '1.0.1';
   
   // データ保存キー

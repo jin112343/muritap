@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1015079927065:android:3458782542e4228925d988",
+        "mobilesdk_app_id": "1:1015079927065:android:ecede6b9347feb7a25d988",
         "android_client_info": {
-          "package_name": "com.example.impossible_tap"
+          "package_name": "com.mizoishun.impossible_tap"
         }
       },
       "oauth_client": [],

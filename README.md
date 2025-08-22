@@ -3,14 +3,20 @@
 蓄積型の中毒系タップアプリ「MURITAP」のFlutter版です。
 
 
-# UI
+# UI (JP)
 
 <img width="200" height="400" alt="Slice 1" src="https://github.com/user-attachments/assets/ece395a2-d257-4857-a408-ab80ce021eef" />
 <img width="200" height="400" alt="Slice 2" src="https://github.com/user-attachments/assets/0eaddb04-a06f-4c4f-8253-c427c222c670" />
 <img width="200" height="400" alt="Slice 3" src="https://github.com/user-attachments/assets/876b7872-dd1f-40f9-803f-070eebd997a8" />
 <img width="200" height="400" alt="Slice 4" src="https://github.com/user-attachments/assets/f554d3e9-6d43-422e-aef2-e49d6018ce8a" />
 
+(US)
 
+
+<img width="200" height="400" alt="Slice 1 (1)" src="https://github.com/user-attachments/assets/32660421-273c-463a-8e6d-c5d50523f8dd" />
+<img width="200" height="400" alt="Slice 2 (1)" src="https://github.com/user-attachments/assets/713149be-8813-462d-9e1a-8bd7ea58586d" />
+<img width="200" height="400" alt="Slice 3 (1)" src="https://github.com/user-attachments/assets/52405433-20ab-44f1-812c-9673acc5aec3" />
+<img width="200" height="400" alt="Slice 4 (1)" src="https://github.com/user-attachments/assets/b630bf92-67ef-4e11-a853-d9f00af86d32" />
 
 ## 🎯 アプリ概要
 

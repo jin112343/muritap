@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'l10n/app_localizations.dart';
+
 import 'dart:developer' as developer;
+import 'dart:io';
 
 // アプリケーションの設定
 import 'config/app_config.dart';
@@ -65,7 +68,7 @@ Future<void> _initializeApp() async {
     developer.log('バッジをクリアしました');
     
     // 毎日20時の通知をスケジュール
-    await NotificationService.instance.scheduleDailyNotification();
+    await NotificationService.instance.scheduleDailyNotificationDefault();
     developer.log('毎日20時の通知をスケジュールしました');
     
     developer.log('通知サービス初期化完了');
@@ -151,28 +154,128 @@ Future<void> _requestTrackingAuthorization() async {
   }
 }
 
-class ImpossibleTapApp extends HookWidget {
+class ImpossibleTapApp extends StatefulWidget {
   const ImpossibleTapApp({super.key});
 
   @override
+  State<ImpossibleTapApp> createState() => _ImpossibleTapAppState();
+}
+
+class _ImpossibleTapAppState extends State<ImpossibleTapApp> {
+  @override
   Widget build(BuildContext context) {
+    final deviceLocale = _getDeviceLocale();
+    
     return MaterialApp(
       title: AppConfig.appName,
       theme: ThemeConfig.darkTheme,
       themeMode: ThemeMode.dark,
       home: const MainNavigationScreen(),
       debugShowCheckedModeBanner: false,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en'), // English
+        Locale('ja'), // Japanese
+      ],
+      locale: deviceLocale, // 端末の言語設定のみを使用
+      localeResolutionCallback: (locale, supportedLocales) {
+        developer.log('localeResolutionCallback: $locale');
+        
+        // 端末の言語設定を確認
+        if (locale != null) {
+          final languageCode = locale.languageCode.toLowerCase();
+          developer.log('端末の言語設定: $languageCode');
+          
+          if (languageCode == 'en') {
+            developer.log('英語を選択');
+            return const Locale('en');
+          } else if (languageCode == 'ja') {
+            developer.log('日本語を選択');
+            return const Locale('ja');
+          }
+        }
+        
+        // デフォルトは英語
+        developer.log('デフォルト言語として英語を選択');
+        return const Locale('en');
+      },
     );
+  }
+
+
+
+  /// 端末の言語設定を取得
+  Locale _getDeviceLocale() {
+    // Platform.localeNameを使用してシステムの言語設定を取得
+    final platformLocale = Platform.localeName;
+    developer.log('Platform.localeName: $platformLocale');
+    
+    // 言語コードを抽出（例: "en_US" -> "en", "ja_JP" -> "ja"）
+    final languageCode = platformLocale.split('_').first.toLowerCase();
+    developer.log('抽出された言語コード: $languageCode');
+    
+    if (languageCode == 'en') {
+      developer.log('英語を選択');
+      return const Locale('en');
+    } else if (languageCode == 'ja') {
+      developer.log('日本語を選択');
+      return const Locale('ja');
+    }
+    
+    // 英語以外の言語の場合は英語をデフォルトとする
+    developer.log('デフォルト言語として英語を選択');
+    return const Locale('en');
   }
 }
 
-class MainNavigationScreen extends HookWidget {
+class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
 
   @override
+  State<MainNavigationScreen> createState() => _MainNavigationScreenState();
+}
+
+class _MainNavigationScreenState extends State<MainNavigationScreen> {
+  int currentIndex = 1; // ホーム画面を初期表示
+
+  @override
+  void initState() {
+    super.initState();
+    // 通知メッセージを設定
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final messages = [
+        AppLocalizations.of(context)!.notificationMessage1,
+        AppLocalizations.of(context)!.notificationMessage2,
+        AppLocalizations.of(context)!.notificationMessage3,
+        AppLocalizations.of(context)!.notificationMessage4,
+        AppLocalizations.of(context)!.notificationMessage5,
+        AppLocalizations.of(context)!.notificationMessage6,
+        AppLocalizations.of(context)!.notificationMessage7,
+        AppLocalizations.of(context)!.notificationMessage8,
+        AppLocalizations.of(context)!.notificationMessage9,
+        AppLocalizations.of(context)!.notificationMessage10,
+        AppLocalizations.of(context)!.notificationMessage11,
+        AppLocalizations.of(context)!.notificationMessage12,
+        AppLocalizations.of(context)!.notificationMessage13,
+        AppLocalizations.of(context)!.notificationMessage14,
+        AppLocalizations.of(context)!.notificationMessage15,
+        AppLocalizations.of(context)!.notificationMessage16,
+        AppLocalizations.of(context)!.notificationMessage17,
+        AppLocalizations.of(context)!.notificationMessage18,
+        AppLocalizations.of(context)!.notificationMessage19,
+        AppLocalizations.of(context)!.notificationMessage20,
+      ];
+      NotificationService.instance.setNotificationMessages(messages);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final currentIndex = useState(1); // ホーム画面を初期表示
-    
     final screens = [
       const RankingScreen(),
       const HomeScreen(),
@@ -181,7 +284,7 @@ class MainNavigationScreen extends HookWidget {
     
     return Scaffold(
       body: IndexedStack(
-        index: currentIndex.value,
+        index: currentIndex,
         children: screens,
       ),
       bottomNavigationBar: Container(
@@ -196,25 +299,25 @@ class MainNavigationScreen extends HookWidget {
           ],
         ),
         child: BottomNavigationBar(
-          currentIndex: currentIndex.value,
-          onTap: (index) => currentIndex.value = index,
+          currentIndex: currentIndex,
+          onTap: (index) => setState(() => currentIndex = index),
           backgroundColor: Colors.transparent,
           selectedItemColor: ThemeConfig.primaryColor,
           unselectedItemColor: Colors.grey[400],
           elevation: 0,
           type: BottomNavigationBarType.fixed,
-          items: const [
+          items: [
             BottomNavigationBarItem(
-              icon: Icon(Icons.leaderboard),
-              label: 'ランキング',
+              icon: const Icon(Icons.leaderboard),
+              label: AppLocalizations.of(context)!.navigationRanking,
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: 'ホーム',
+              icon: const Icon(Icons.home),
+              label: AppLocalizations.of(context)!.navigationHome,
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.settings),
-              label: '設定',
+              icon: const Icon(Icons.settings),
+              label: AppLocalizations.of(context)!.navigationSettings,
             ),
           ],
         ),

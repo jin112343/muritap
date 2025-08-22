@@ -9,6 +9,7 @@ import '../services/game_center_service.dart';
 import '../services/data_service.dart';
 import '../services/share_service.dart';
 import '../services/ad_service.dart'; // AdServiceを追加
+import '../l10n/app_localizations.dart';
 
 /// ランキング画面
 /// GameCenterとの連携でランキングを表示
@@ -25,9 +26,9 @@ class RankingScreen extends HookWidget {
     final showInAppRanking = useState(false);
     
     // リアルタイムデータ監視
-    final currentTaps = useState(DataService.instance.getTotalTaps());
-    final totalTapsForGameCenter = useState(DataService.instance.getTotalTaps());
-    final currentLevel = useState(DataService.instance.getCurrentLevel());
+    final currentTaps = useState(0); // 初期値は0に設定
+    final totalTapsForGameCenter = useState(0); // 初期値は0に設定
+    final currentLevel = useState(1); // 初期値は1に設定
     
     // データを定期的に更新
     useEffect(() {
@@ -54,12 +55,10 @@ class RankingScreen extends HookWidget {
       try {
         await ShareService.instance.shareScreenshot(
           screenshotKey,
-          text: '''絶対ムリタップで
-レベル${currentLevel.value}で
-総タップ数${currentTaps.value}回達成！
-あなたもランキングに参加しよう！
-アプリダウンロードはこちら(ios):
-https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
+          text: AppLocalizations.of(context)!.rankingShareText(
+            currentLevel.value.toString(),
+            currentTaps.value.toString(),
+          ),
         );
       } finally {
         // 共有完了後、広告を再表示
@@ -139,7 +138,7 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('タップ回数 ${scoreToSubmit}回 を送信しました！'),
+                content: Text(AppLocalizations.of(context)!.dialogsScoreSubmitSuccess(scoreToSubmit.toString())),
                 backgroundColor: ThemeConfig.successColor,
               ),
             );
@@ -147,10 +146,10 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
         } else {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('スコアの送信に失敗しました'),
-                backgroundColor: Colors.red,
-              ),
+                          SnackBar(
+              content: Text(AppLocalizations.of(context)!.dialogsScoreSubmitFailed),
+              backgroundColor: Colors.red,
+            ),
             );
           }
         }
@@ -171,7 +170,7 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('ランキング'),
+        title: Text(AppLocalizations.of(context)!.rankingTitle),
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
@@ -182,7 +181,7 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
               Icons.share,
               color: ThemeConfig.primaryColor,
             ),
-            tooltip: 'スクリーンショットを共有',
+            tooltip: AppLocalizations.of(context)!.rankingShareTooltip,
           ),
         ],
       ),
@@ -201,26 +200,26 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
                       children: [
-                        const Text(
-                          'あなたの記録',
-                          style: TextStyle(
+                        Text(
+                          AppLocalizations.of(context)!.rankingYourRecord,
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          '累積タップ数: ${currentTaps.value}',
+                          '${AppLocalizations.of(context)!.rankingTotalTaps}: ${currentTaps.value}',
                           style: const TextStyle(fontSize: 16),
                         ),
                         Text(
-                          '現在レベル: ${currentLevel.value}',
+                          '${AppLocalizations.of(context)!.rankingCurrentLevel}: ${currentLevel.value}',
                           style: const TextStyle(fontSize: 16),
                         ),
                         if (currentPlayerScore.value != null) ...[
                           const SizedBox(height: 8),
                           Text(
-                            'GameCenter記録: ${currentPlayerScore.value}',
+                            '${AppLocalizations.of(context)!.rankingGameCenterRecord}: ${currentPlayerScore.value}',
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -231,7 +230,7 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
                         if (lastSubmittedScore.value != null) ...[
                           const SizedBox(height: 4),
                           Text(
-                            '最後に送信: ${lastSubmittedScore.value}',
+                            '${AppLocalizations.of(context)!.rankingLastSubmitted}: ${lastSubmittedScore.value}',
                             style: const TextStyle(
                               fontSize: 14,
                               color: Colors.grey,
@@ -258,8 +257,8 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
                       : const Icon(Icons.leaderboard),
                     label: Text(
                       isLoading.value 
-                        ? '読み込み中...' 
-                        : (isSignedIn.value ? 'GameCenterで見る' : 'GameCenterにサインイン'),
+                        ? AppLocalizations.of(context)!.rankingLoading
+                        : (isSignedIn.value ? AppLocalizations.of(context)!.rankingViewInGameCenter : AppLocalizations.of(context)!.rankingSignInToGameCenter),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: ThemeConfig.primaryColor,
@@ -281,8 +280,8 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
                       : const Icon(Icons.upload),
                     label: Text(
                       isLoading.value 
-                        ? '送信中...' 
-                        : 'タップ回数を送信',
+                        ? AppLocalizations.of(context)!.rankingUploading
+                        : AppLocalizations.of(context)!.rankingSubmitTaps,
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: ThemeConfig.accentColor,
@@ -306,18 +305,18 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
                             color: Colors.grey,
                           ),
                           const SizedBox(height: 8),
-                          const Text(
-                            'GameCenterはiOSのみ対応',
-                            style: TextStyle(
+                          Text(
+                            AppLocalizations.of(context)!.rankingGameCenterIosOnly,
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           const SizedBox(height: 8),
-                          const Text(
-                            'タップ回数のランキング機能はiOSデバイスでのみ利用できます。',
+                          Text(
+                            AppLocalizations.of(context)!.rankingGameCenterDescription,
                             textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 14),
+                            style: const TextStyle(fontSize: 14),
                           ),
                         ],
                       ),
@@ -337,9 +336,9 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text(
-                                'ランキング',
-                                style: TextStyle(
+                              Text(
+                                AppLocalizations.of(context)!.rankingLeaderboard,
+                                style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -415,27 +414,23 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
                 const SizedBox(height: 16),
                 
                 // 説明文
-                const Card(
+                Card(
                   child: Padding(
-                    padding: EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.all(16.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'ランキングについて',
-                          style: TextStyle(
+                          AppLocalizations.of(context)!.rankingAbout,
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        SizedBox(height: 8),
+                        const SizedBox(height: 8),
                         Text(
-                          '• 累積タップ数がランキングに反映されます\n'
-                          '• レベルアップ時に自動でスコアが送信されます\n'
-                          '• 手動でも「タップ回数を送信」で送信できます\n'
-                          '• アプリ内でランキングが自動表示されます\n'
-                          '• 「GameCenterで見る」で標準のGameCenter画面も利用可能',
-                          style: TextStyle(fontSize: 14),
+                          AppLocalizations.of(context)!.rankingAboutDescription,
+                          style: const TextStyle(fontSize: 14),
                         ),
                       ],
                     ),

@@ -1,6 +1,8 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
+import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 
 /// 通知管理サービス
 class NotificationService {
@@ -56,38 +58,26 @@ class NotificationService {
     // 必要に応じて通知タップ時の処理を追加
   }
 
-  /// 煽る通知メッセージのリスト
-  static const List<String> _motivationalMessages = [
-    '今日はタップしないの？',
-    'タップする時間ですよ！',
-    'まだタップしてないの？',
-    '今日も頑張ってタップしよう！',
-    'タップでレベルアップしよう！',
-    '今日のタップは済みましたか？',
-    'タップの時間です！',
-    'まだまだタップできるよ！',
-    '今日もタップで記録更新！',
-    'タップで新しい記録を作ろう！',
-    '今日のタップ目標は達成しましたか？',
-    'タップでストレス発散！',
-    '今日もタップで楽しく！',
-    'タップで脳トレ！',
-    '今日のタップは何回？',
-    'タップで集中力アップ！',
-    '今日もタップで頑張ろう！',
-    'タップでリフレッシュ！',
-    '今日のタップは済みましたか？',
-    'タップで新しい発見を！',
-  ];
+  /// 煽る通知メッセージのリスト（多言語対応のためパラメータとして受け取る）
+  static List<String> _motivationalMessages = [];
 
   /// ランダムな煽るメッセージを取得
   String _getRandomMotivationalMessage() {
+    if (_motivationalMessages.isEmpty) {
+      // デフォルトメッセージ（多言語設定が未実行の場合）
+      return 'タップの時間です！';
+    }
     final random = DateTime.now().millisecondsSinceEpoch % _motivationalMessages.length;
     return _motivationalMessages[random];
   }
+  
+  /// 通知メッセージを設定
+  void setNotificationMessages(List<String> messages) {
+    _motivationalMessages = messages;
+  }
 
   /// 毎日20時の通知をスケジュール
-  Future<void> scheduleDailyNotification() async {
+  Future<void> scheduleDailyNotification(BuildContext context, {String? appName, String? channelName, String? channelDescription}) async {
     try {
       // 既存の通知をキャンセル
       await _flutterLocalNotificationsPlugin.cancel(1001);
@@ -103,19 +93,19 @@ class NotificationService {
       
       await _flutterLocalNotificationsPlugin.zonedSchedule(
         1001, // 通知ID
-        '絶対ムリタップ', // タイトル
+        appName ?? AppLocalizations.of(context)!.notificationAppName, // タイトル
         _getRandomMotivationalMessage(), // メッセージ
         tz.TZDateTime.from(targetDate, tz.local),
-        const NotificationDetails(
+        NotificationDetails(
           android: AndroidNotificationDetails(
             'daily_reminder_channel',
-            '毎日のリマインダー',
-            channelDescription: '毎日20時のタップリマインダー',
+            channelName ?? AppLocalizations.of(context)!.notificationChannelName,
+            channelDescription: channelDescription ?? AppLocalizations.of(context)!.notificationChannelDescription,
             importance: Importance.high,
             priority: Priority.high,
             showWhen: true,
           ),
-          iOS: DarwinNotificationDetails(
+          iOS: const DarwinNotificationDetails(
             presentAlert: true,
             presentBadge: true,
             presentSound: true,
@@ -126,6 +116,51 @@ class NotificationService {
       );
       
       print('毎日20時の通知をスケジュールしました: ${targetDate.toString()}');
+    } catch (e) {
+      print('通知スケジュールエラー: $e');
+    }
+  }
+
+  /// 毎日20時の通知をスケジュール（BuildContextなし、デフォルト言語）
+  Future<void> scheduleDailyNotificationDefault({String? appName, String? channelName, String? channelDescription}) async {
+    try {
+      // 既存の通知をキャンセル
+      await _flutterLocalNotificationsPlugin.cancel(1001);
+      
+      // 20時に通知をスケジュール
+      final now = DateTime.now();
+      final scheduledDate = DateTime(now.year, now.month, now.day, 20, 0, 0);
+      
+      // 今日の20時が過ぎている場合は明日の20時に設定
+      final targetDate = scheduledDate.isBefore(now) 
+          ? scheduledDate.add(const Duration(days: 1))
+          : scheduledDate;
+      
+      await _flutterLocalNotificationsPlugin.zonedSchedule(
+        1001, // 通知ID
+        appName ?? 'Impossible Tap', // デフォルトは英語
+        _getRandomMotivationalMessage(), // メッセージ
+        tz.TZDateTime.from(targetDate, tz.local),
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            'daily_reminder_channel',
+            channelName ?? 'Daily Reminder',
+            channelDescription: channelDescription ?? 'Daily tap reminder at 8 PM',
+            importance: Importance.high,
+            priority: Priority.high,
+            showWhen: true,
+          ),
+          iOS: const DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
+        ),
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        matchDateTimeComponents: DateTimeComponents.time, // 毎日同じ時間に繰り返し
+      );
+      
+      print('毎日20時の通知をスケジュールしました');
     } catch (e) {
       print('通知スケジュールエラー: $e');
     }
@@ -217,18 +252,20 @@ class NotificationService {
   }
 
   /// 通知を表示
-  Future<void> showNotification({
+  Future<void> showNotification(BuildContext context, {
     required int id,
     required String title,
     required String body,
     String? payload,
+    String? channelName,
+    String? channelDescription,
   }) async {
     try {
-      const AndroidNotificationDetails androidPlatformChannelSpecifics =
+      final AndroidNotificationDetails androidPlatformChannelSpecifics =
           AndroidNotificationDetails(
         'impossible_tap_channel',
-        '絶対ムリタップ',
-        channelDescription: '絶対ムリタップの通知',
+        channelName ?? AppLocalizations.of(context)!.notificationGeneralChannelName,
+        channelDescription: channelDescription ?? AppLocalizations.of(context)!.notificationGeneralChannelDescription,
         importance: Importance.max,
         priority: Priority.high,
         showWhen: true,
@@ -241,7 +278,7 @@ class NotificationService {
         presentSound: true,
       );
 
-      const NotificationDetails platformChannelSpecifics =
+      final NotificationDetails platformChannelSpecifics =
           NotificationDetails(
         android: androidPlatformChannelSpecifics,
         iOS: iOSPlatformChannelSpecifics,

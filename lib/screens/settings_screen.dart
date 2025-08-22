@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:async';
 import 'dart:developer' as developer;
@@ -12,74 +11,113 @@ import '../widgets/stats_chart.dart';
 import 'webview_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/notification_service.dart';
+import '../l10n/app_localizations.dart';
 
 /// 設定画面
 /// アプリ情報と外部リンクを提供
-class SettingsScreen extends HookWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // 統計データをリアルタイムで監視
-    final totalTaps = useState(DataService.instance.getTotalTaps());
-    final currentLevel = useState(DataService.instance.getCurrentLevel());
-    final todayTaps = useState<int>(0);
-    final todayActualTaps = useState<int>(0);
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
 
-    final weeklyStats = useState<List<DailyStats>>([]);
-    final monthlyStats = useState<List<DailyStats>>([]);
-    final isLoadingStats = useState(true);
-    final isPurchaseAvailable = useState(false);
+class _SettingsScreenState extends State<SettingsScreen> with TickerProviderStateMixin {
+  // 統計データをリアルタイムで監視
+  int totalTaps = 0;
+  int currentLevel = 1;
+  int todayTaps = 0;
+  int todayActualTaps = 0;
 
-    // 通知設定の状態
-    final isDailyNotificationEnabled = useState(false);
+  List<DailyStats> weeklyStats = [];
+  List<DailyStats> monthlyStats = [];
+  bool isLoadingStats = true;
+  bool isPurchaseAvailable = false;
+
+  // 通知設定の状態
+  bool isDailyNotificationEnabled = false;
+
+  // TabController
+  late TabController tabController;
+
+  // タイマー
+  Timer? _statsTimer;
+  Timer? _purchaseTimer;
+
+  // 商品カード用の状態変数
+  bool isLoadingRemoveAds = false;
+  String? selectedProductIdRemoveAds;
+  final Map<String, bool> isLoadingMap = {};
+  final Map<String, String?> selectedProductIdMap = {};
+
+  @override
+  void initState() {
+    super.initState();
+    tabController = TabController(length: 3, vsync: this);
     
-
-
-    // TabControllerを作成
-    final tabController = useTabController(initialLength: 3);
+    // 初期データを読み込み
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeData();
+    });
 
     // 統計データを定期的に更新
-    useEffect(() {
-      // 初期データを読み込み
-      _initializeData(
-        todayTaps,
-        todayActualTaps,
-        weeklyStats,
-        monthlyStats,
-        isLoadingStats,
-        totalTaps,
-        currentLevel,
-        isDailyNotificationEnabled,
-      );
-
-      // 定期更新タイマー（5秒間隔に変更してパフォーマンス改善）
-      final timer = Timer.periodic(const Duration(seconds: 5), (timer) {
-        _updateStatsData(
-          todayTaps,
-          todayActualTaps,
-          weeklyStats,
-          monthlyStats,
-          totalTaps,
-          currentLevel,
-          timer,
-        );
-      });
-
-      return timer.cancel;
-    }, []);
+    _statsTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      _updateStatsData();
+    });
 
     // 課金機能の状態を監視
-    useEffect(() {
-      final timer = Timer.periodic(const Duration(seconds: 5), (timer) {
-        isPurchaseAvailable.value = PurchaseService.instance.isAvailable;
+    _purchaseTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      setState(() {
+        isPurchaseAvailable = PurchaseService.instance.isAvailable;
       });
+    });
+  }
 
-      return () => timer.cancel;
-    }, []);
-    
+  @override
+  void dispose() {
+    _statsTimer?.cancel();
+    _purchaseTimer?.cancel();
+    tabController.dispose();
+    super.dispose();
+  }
 
+  // 初期データを読み込み
+  void _initializeData() {
+    _initializeDataWithLocalization();
+  }
 
+  // 統計データを更新
+  Future<void> _updateStatsData() async {
+    try {
+      // 今日の統計データを非同期で更新
+      final todayTapsValue = await StatsService.instance.getTodayTaps();
+      final todayActualTapsValue =
+          await StatsService.instance.getTodayActualTaps();
+
+      if (todayTapsValue != todayTaps) {
+        setState(() {
+          todayTaps = todayTapsValue;
+        });
+      }
+
+      if (todayActualTapsValue != todayActualTaps) {
+        setState(() {
+          todayActualTaps = todayActualTapsValue;
+        });
+      }
+
+      // 強制的にデータを更新
+      setState(() {
+        totalTaps = DataService.instance.getTotalTaps();
+        currentLevel = DataService.instance.getCurrentLevel();
+      });
+    } catch (e) {
+      developer.log('統計データ更新エラー: $e');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return SafeArea(
       child: Column(
         children: [
@@ -88,10 +126,10 @@ class SettingsScreen extends HookWidget {
             color: ThemeConfig.surfaceColor,
             child: TabBar(
               controller: tabController,
-              tabs: const [
-                Tab(text: '設定'),
-                Tab(text: '統計'),
-                Tab(text: '購入'),
+              tabs: [
+                Tab(text: AppLocalizations.of(context)!.settingsTabsSettings),
+                Tab(text: AppLocalizations.of(context)!.settingsTabsStats),
+                Tab(text: AppLocalizations.of(context)!.settingsTabsPurchase),
               ],
             ),
           ),
@@ -127,96 +165,62 @@ class SettingsScreen extends HookWidget {
   }
 
   /// 初期データの読み込み
-  static Future<void> _initializeData(
-      ValueNotifier<int> todayTaps,
-      ValueNotifier<int> todayActualTaps,
-      ValueNotifier<List<DailyStats>> weeklyStats,
-      ValueNotifier<List<DailyStats>> monthlyStats,
-      ValueNotifier<bool> isLoadingStats,
-      ValueNotifier<int> totalTaps,
-      ValueNotifier<int> currentLevel,
-      ValueNotifier<bool> isDailyNotificationEnabled,
-      ) async {
+  Future<void> _initializeDataWithLocalization() async {
     try {
       // 今日の統計データを読み込み
       final todayTapsValue = await StatsService.instance.getTodayTaps();
       final todayActualTapsValue =
-      await StatsService.instance.getTodayActualTaps();
-
-      todayTaps.value = todayTapsValue;
-      todayActualTaps.value = todayActualTapsValue;
+          await StatsService.instance.getTodayActualTaps();
 
       // 統計データを初期読み込み
       final results = await Future.wait([
-        StatsService.instance.getThisWeekStats(),
-        StatsService.instance.getLast30DaysStats(),
+        StatsService.instance.getThisWeekStats(
+          monday: AppLocalizations.of(context)!.weekdayMonday,
+          tuesday: AppLocalizations.of(context)!.weekdayTuesday,
+          wednesday: AppLocalizations.of(context)!.weekdayWednesday,
+          thursday: AppLocalizations.of(context)!.weekdayThursday,
+          friday: AppLocalizations.of(context)!.weekdayFriday,
+          saturday: AppLocalizations.of(context)!.weekdaySaturday,
+          sunday: AppLocalizations.of(context)!.weekdaySunday,
+        ),
+        StatsService.instance.getLast30DaysStats(
+          monday: AppLocalizations.of(context)!.weekdayMonday,
+          tuesday: AppLocalizations.of(context)!.weekdayTuesday,
+          wednesday: AppLocalizations.of(context)!.weekdayWednesday,
+          thursday: AppLocalizations.of(context)!.weekdayThursday,
+          friday: AppLocalizations.of(context)!.weekdayFriday,
+          saturday: AppLocalizations.of(context)!.weekdaySaturday,
+          sunday: AppLocalizations.of(context)!.weekdaySunday,
+        ),
       ]);
 
-      weeklyStats.value = results[0];
-      monthlyStats.value = results[1];
-      isLoadingStats.value = false;
-
-      // 初期データを強制更新
-      totalTaps.value = DataService.instance.getTotalTaps();
-      currentLevel.value = DataService.instance.getCurrentLevel();
+      // 強制的にデータを更新
+      setState(() {
+        todayTaps = todayTapsValue;
+        todayActualTaps = todayActualTapsValue;
+        weeklyStats = results[0];
+        monthlyStats = results[1];
+        isLoadingStats = false;
+        totalTaps = DataService.instance.getTotalTaps();
+        currentLevel = DataService.instance.getCurrentLevel();
+      });
 
       // 通知設定の状態を確認
       final scheduled =
-      await NotificationService.instance.isDailyNotificationScheduled();
-      isDailyNotificationEnabled.value = scheduled;
+          await NotificationService.instance.isDailyNotificationScheduled();
+      setState(() {
+        isDailyNotificationEnabled = scheduled;
+      });
     } catch (e) {
       developer.log('初期データ読み込みエラー: $e');
-    }
-  }
-
-  /// 統計データの更新
-  static Future<void> _updateStatsData(
-      ValueNotifier<int> todayTaps,
-      ValueNotifier<int> todayActualTaps,
-      ValueNotifier<List<DailyStats>> weeklyStats,
-      ValueNotifier<List<DailyStats>> monthlyStats,
-      ValueNotifier<int> totalTaps,
-      ValueNotifier<int> currentLevel,
-      Timer timer,
-      ) async {
-    try {
-      // 今日の統計データを非同期で更新
-      final todayTapsValue = await StatsService.instance.getTodayTaps();
-      final todayActualTapsValue =
-      await StatsService.instance.getTodayActualTaps();
-
-      if (todayTapsValue != todayTaps.value) {
-        todayTaps.value = todayTapsValue;
-      }
-
-      if (todayActualTapsValue != todayActualTaps.value) {
-        todayActualTaps.value = todayActualTapsValue;
-      }
-
-      // 週間・月間統計を定期的に更新（30秒間隔）
-      if (timer.tick % 6 == 0) {
-        final results = await Future.wait([
-          StatsService.instance.getThisWeekStats(),
-          StatsService.instance.getLast30DaysStats(),
-        ]);
-
-        weeklyStats.value = results[0];
-        monthlyStats.value = results[1];
-      }
-
-      // 強制的にデータを更新
-      totalTaps.value = DataService.instance.getTotalTaps();
-      currentLevel.value = DataService.instance.getCurrentLevel();
-    } catch (e) {
-      developer.log('統計データ更新エラー: $e');
     }
   }
 
   /// 設定タブのWidget
   Widget _buildSettingsTab(
       BuildContext context,
-      ValueNotifier<int> currentLevel,
-      ValueNotifier<bool> isDailyNotificationEnabled,
+      int currentLevel,
+      bool isDailyNotificationEnabled,
       ) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
@@ -275,19 +279,19 @@ class SettingsScreen extends HookWidget {
         children: [
           ListTile(
             leading: const Icon(Icons.email),
-            title: const Text('お問い合わせ'),
-            subtitle: const Text('バグ報告や機能要望'),
+            title: Text(AppLocalizations.of(context)!.settingsContact),
+            subtitle: Text(AppLocalizations.of(context)!.settingsContactDescription),
             onTap: () => _launchEmail(context),
           ),
           ListTile(
             leading: const Icon(Icons.privacy_tip),
-            title: const Text('プライバシーポリシー'),
-            subtitle: const Text('個人情報の取り扱い'),
+            title: Text(AppLocalizations.of(context)!.settingsPrivacyPolicy),
+            subtitle: Text(AppLocalizations.of(context)!.settingsPrivacyDescription),
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (context) => const WebViewScreen(
-                    title: 'プライバシーポリシー',
+                  builder: (context) => WebViewScreen(
+                    title: AppLocalizations.of(context)!.settingsPrivacyPolicy,
                     url: AppConfig.privacyPolicyUrl,
                   ),
                 ),
@@ -296,13 +300,13 @@ class SettingsScreen extends HookWidget {
           ),
           ListTile(
             leading: const Icon(Icons.description),
-            title: const Text('利用規約'),
-            subtitle: const Text('アプリの利用条件'),
+            title: Text(AppLocalizations.of(context)!.settingsTermsOfService),
+            subtitle: Text(AppLocalizations.of(context)!.settingsTermsDescription),
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (context) => const WebViewScreen(
-                    title: '利用規約',
+                  builder: (context) => WebViewScreen(
+                    title: AppLocalizations.of(context)!.settingsTermsOfService,
                     url: AppConfig.termsOfServiceUrl,
                   ),
                 ),
@@ -315,7 +319,7 @@ class SettingsScreen extends HookWidget {
   }
 
   /// アプリ詳細情報カード
-  Widget _buildAppDetailsCard(ValueNotifier<int> currentLevel) {
+  Widget _buildAppDetailsCard(int currentLevel) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -323,7 +327,7 @@ class SettingsScreen extends HookWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'アプリ情報',
+              AppLocalizations.of(context)!.settingsAppInfoTitle,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -337,14 +341,14 @@ class SettingsScreen extends HookWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '現在のレベル',
+                  AppLocalizations.of(context)!.settingsCurrentLevel,
                   style: TextStyle(
                     fontSize: 16,
                     color: Colors.grey[600],
                   ),
                 ),
                 Text(
-                  'Lv.${currentLevel.value}',
+                  'Lv.${currentLevel}',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -365,7 +369,7 @@ class SettingsScreen extends HookWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      '現在のタップ倍率',
+                      AppLocalizations.of(context)!.settingsCurrentTapMultiplier,
                       style: TextStyle(
                         fontSize: 16,
                         color: Colors.grey[600],
@@ -406,8 +410,8 @@ class SettingsScreen extends HookWidget {
         children: [
           ListTile(
             leading: const Icon(Icons.delete_forever, color: Colors.red),
-            title: const Text('データを削除'),
-            subtitle: const Text('すべてのデータをリセット'),
+            title: Text(AppLocalizations.of(context)!.settingsDeleteData),
+            subtitle: Text(AppLocalizations.of(context)!.settingsDeleteDataDescription),
             onTap: () => _showDataDeleteDialog(context),
           ),
         ],
@@ -418,28 +422,27 @@ class SettingsScreen extends HookWidget {
   /// 通知設定カード
   Widget _buildNotificationCard(
       BuildContext context,
-      ValueNotifier<bool> isDailyNotificationEnabled,
+      bool isDailyNotificationEnabled,
       ) {
     return Card(
       child: Column(
         children: [
           ListTile(
             leading: Icon(
-              isDailyNotificationEnabled.value
+              isDailyNotificationEnabled
                   ? Icons.notifications_active
                   : Icons.notifications_off,
-              color: isDailyNotificationEnabled.value
+              color: isDailyNotificationEnabled
                   ? ThemeConfig.primaryColor
                   : Colors.grey,
             ),
-            title: const Text('毎日20時の通知'),
-            subtitle: const Text('毎日20時にタップを促す通知'),
+            title: Text(AppLocalizations.of(context)!.settingsDailyNotification),
+            subtitle: Text(AppLocalizations.of(context)!.settingsDailyNotificationDescription),
             trailing: Switch(
-              value: isDailyNotificationEnabled.value,
+              value: isDailyNotificationEnabled,
               onChanged: (value) => _toggleNotification(
                 context,
                 value,
-                isDailyNotificationEnabled,
               ),
               activeColor: ThemeConfig.primaryColor,
             ),
@@ -451,13 +454,13 @@ class SettingsScreen extends HookWidget {
 
   /// 統計タブのWidget
   Widget _buildStatsTab(
-      ValueNotifier<int> totalTaps,
-      ValueNotifier<int> currentLevel,
-      ValueNotifier<int> todayTaps,
-      ValueNotifier<int> todayActualTaps,
-      ValueNotifier<List<DailyStats>> weeklyStats,
-      ValueNotifier<List<DailyStats>> monthlyStats,
-      ValueNotifier<bool> isLoadingStats,
+      int totalTaps,
+      int currentLevel,
+      int todayTaps,
+      int todayActualTaps,
+      List<DailyStats> weeklyStats,
+      List<DailyStats> monthlyStats,
+      bool isLoadingStats,
       ) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
@@ -474,15 +477,15 @@ class SettingsScreen extends HookWidget {
           const SizedBox(height: 16),
 
           // 統計グラフ
-          if (!isLoadingStats.value) ...[
+          if (!isLoadingStats) ...[
             StatsChart(
-              stats: weeklyStats.value,
-              title: '今週の記録（月曜日から）',
+              stats: weeklyStats,
+              title: AppLocalizations.of(context)!.settingsWeeklyRecordTitle,
             ),
             const SizedBox(height: 16),
             StatsChart(
-              stats: monthlyStats.value,
-              title: '過去30日間の記録',
+              stats: monthlyStats,
+              title: AppLocalizations.of(context)!.settingsMonthlyRecordTitle,
               barColor: ThemeConfig.accentColor,
               isScrollable: true,
             ),
@@ -503,10 +506,10 @@ class SettingsScreen extends HookWidget {
 
   /// 今日の統計カード
   Widget _buildTodayStatsCard(
-      ValueNotifier<int> totalTaps,
-      ValueNotifier<int> currentLevel,
-      ValueNotifier<int> todayTaps,
-      ValueNotifier<int> todayActualTaps,
+      int totalTaps,
+      int currentLevel,
+      int todayTaps,
+      int todayActualTaps,
       ) {
     return Card(
       child: Padding(
@@ -515,7 +518,7 @@ class SettingsScreen extends HookWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '今日の統計',
+              AppLocalizations.of(context)!.settingsTodayStatsTitle,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -524,13 +527,13 @@ class SettingsScreen extends HookWidget {
             ),
             const SizedBox(height: 12),
 
-            _buildStatRow('今日のタップ数', '${todayTaps.value}', ThemeConfig.primaryColor),
+            _buildStatRow(AppLocalizations.of(context)!.settingsTodayTaps, '${todayTaps}', ThemeConfig.primaryColor),
             const SizedBox(height: 8),
-            _buildStatRow('今日の実際のタップ数', '${todayActualTaps.value}', ThemeConfig.accentColor),
+            _buildStatRow(AppLocalizations.of(context)!.settingsTodayActualTaps, '${todayActualTaps}', ThemeConfig.accentColor),
             const SizedBox(height: 8),
-            _buildStatRow('総タップ数', '${totalTaps.value}', ThemeConfig.primaryColor),
+            _buildStatRow(AppLocalizations.of(context)!.settingsTotalTaps, '${totalTaps}', ThemeConfig.primaryColor),
             const SizedBox(height: 8),
-            _buildStatRow('現在のレベル', 'Lv.${currentLevel.value}', ThemeConfig.primaryColor),
+            _buildStatRow(AppLocalizations.of(context)!.settingsCurrentLevelLabel, 'Lv.${currentLevel}', ThemeConfig.primaryColor),
           ],
         ),
       ),
@@ -595,7 +598,7 @@ class SettingsScreen extends HookWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '課金商品',
+              AppLocalizations.of(context)!.settingsPurchaseTitle,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -604,7 +607,7 @@ class SettingsScreen extends HookWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              '広告削除やタップ倍率アップなどの機能を購入できます。',
+              AppLocalizations.of(context)!.settingsPurchaseDescription,
               style: TextStyle(
                 fontSize: 16,
                 color: Colors.grey[600],
@@ -629,8 +632,8 @@ class SettingsScreen extends HookWidget {
           child: _buildProductCard(
             context,
             PurchaseService.removeAds,
-            useState(false),
-            useState<String?>(null),
+            isLoadingMap[PurchaseService.removeAds] ?? false,
+            selectedProductIdMap[PurchaseService.removeAds],
           ),
         ),
       );
@@ -655,8 +658,8 @@ class SettingsScreen extends HookWidget {
           child: _buildProductCard(
             context,
             productId,
-            useState(false),
-            useState<String?>(null),
+            isLoadingMap[productId] ?? false,
+            selectedProductIdMap[productId],
           ),
         );
       }).toList(), // ← .toList() を追加
@@ -670,8 +673,8 @@ class SettingsScreen extends HookWidget {
     return Card(
       child: ListTile(
         leading: const Icon(Icons.restore, color: Colors.blue),
-        title: const Text('購入履歴を復元'),
-        subtitle: const Text('以前の購入を復元します'),
+        title: Text(AppLocalizations.of(context)!.purchaseRestorePurchases),
+        subtitle: Text(AppLocalizations.of(context)!.purchaseRestorePurchasesDescription),
         onTap: () => _restorePurchases(context),
       ),
     );
@@ -681,8 +684,8 @@ class SettingsScreen extends HookWidget {
   Widget _buildProductCard(
       BuildContext context,
       String productId,
-      ValueNotifier<bool> isLoading,
-      ValueNotifier<String?> selectedProductId,
+      bool isLoading,
+      String? selectedProductId,
       ) {
     return FutureBuilder<bool>(
       future: PurchaseService.instance.isProductPurchased(productId),
@@ -712,7 +715,7 @@ class SettingsScreen extends HookWidget {
                         children: [
                           Text(
                             PurchaseService.instance
-                                .getProductDisplayName(productId),
+                                .getProductDisplayName(productId, context),
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -722,7 +725,7 @@ class SettingsScreen extends HookWidget {
                           const SizedBox(height: 4),
                           Text(
                             PurchaseService.instance
-                                .getProductDescription(productId),
+                                .getProductDescription(productId, context),
                             style: TextStyle(
                               fontSize: 14,
                               color: Colors.grey[600],
@@ -754,16 +757,14 @@ class SettingsScreen extends HookWidget {
                   SizedBox(
                     width: double.infinity,
                                       child: ElevatedButton.icon(
-                    onPressed: isLoading.value
+                    onPressed: isLoading
                         ? null
                         : () => _purchaseProduct(
                       context,
                       productId,
-                      isLoading,
-                      selectedProductId,
                     ),
                     icon: const Icon(Icons.payment),
-                    label: const Text('購入する'),
+                    label: Text(AppLocalizations.of(context)!.purchaseButton),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: ThemeConfig.primaryColor,
                       foregroundColor: Colors.white,
@@ -783,13 +784,13 @@ class SettingsScreen extends HookWidget {
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: Colors.green),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.check_circle, color: Colors.green, size: 20),
-                        SizedBox(width: 8),
+                        const Icon(Icons.check_circle, color: Colors.green, size: 20),
+                        const SizedBox(width: 8),
                         Text(
-                          '購入済み',
+                          AppLocalizations.of(context)!.settingsPurchased,
                           style: TextStyle(
                             color: Colors.green,
                             fontWeight: FontWeight.bold,
@@ -821,10 +822,10 @@ class SettingsScreen extends HookWidget {
       } else {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('メールアプリを開けませんでした'),
-              backgroundColor: Colors.red,
-            ),
+                                        SnackBar(
+                              content: Text(AppLocalizations.of(context)!.settingsEmailAppError),
+                              backgroundColor: Colors.red,
+                            ),
           );
         }
       }
@@ -833,7 +834,7 @@ class SettingsScreen extends HookWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('メール送信エラー: $e'),
+                            content: Text(AppLocalizations.of(context)!.settingsEmailSendError(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -871,10 +872,10 @@ class SettingsScreen extends HookWidget {
       // 画面を更新
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('すべてのデータを削除しました'),
-            backgroundColor: Colors.green,
-          ),
+                      SnackBar(
+              content: Text(AppLocalizations.of(context)!.settingsDataDeleteSuccess),
+              backgroundColor: Colors.green,
+            ),
         );
       }
     } catch (e, stackTrace) {
@@ -882,7 +883,7 @@ class SettingsScreen extends HookWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('データ削除中にエラーが発生しました: $e'),
+                            content: Text(AppLocalizations.of(context)!.settingsDataDeleteError(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -896,18 +897,16 @@ class SettingsScreen extends HookWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('データ削除の確認'),
-          content: const Text(
-            'すべてのデータ（タップ数、レベル、統計など）が削除されます。\n'
-                'この操作は取り消すことができません。\n\n'
-                '本当に削除しますか？',
+          title: Text(AppLocalizations.of(context)!.settingsDataDeleteConfirmTitle),
+          content: Text(
+            AppLocalizations.of(context)!.settingsDataDeleteConfirmContent,
           ),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text('キャンセル'),
+              child: Text(AppLocalizations.of(context)!.settingsDataDeleteConfirmCancel),
             ),
             TextButton(
               onPressed: () async {
@@ -917,7 +916,7 @@ class SettingsScreen extends HookWidget {
               style: TextButton.styleFrom(
                 foregroundColor: Colors.red,
               ),
-              child: const Text('削除'),
+              child: Text(AppLocalizations.of(context)!.settingsDataDeleteConfirmDelete),
             ),
           ],
         );
@@ -925,21 +924,22 @@ class SettingsScreen extends HookWidget {
     );
   }
 
-  /// 通知設定の切り替え
-  static Future<void> _toggleNotification(
+  /// 通知の有効/無効を切り替え
+  Future<void> _toggleNotification(
       BuildContext context,
       bool value,
-      ValueNotifier<bool> isDailyNotificationEnabled,
       ) async {
     try {
       if (value) {
         // 通知を有効化
-        await NotificationService.instance.scheduleDailyNotification();
-        isDailyNotificationEnabled.value = true;
+        await NotificationService.instance.scheduleDailyNotification(context);
+        setState(() {
+          isDailyNotificationEnabled = true;
+        });
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('毎日20時の通知を有効にしました'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.settingsNotificationEnabled),
               backgroundColor: Colors.green,
             ),
           );
@@ -947,22 +947,24 @@ class SettingsScreen extends HookWidget {
       } else {
         // 通知を無効化
         await NotificationService.instance.cancelDailyNotification();
-        isDailyNotificationEnabled.value = false;
+        setState(() {
+          isDailyNotificationEnabled = false;
+        });
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('毎日20時の通知を無効にしました'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.settingsNotificationDisabled),
               backgroundColor: Colors.orange,
             ),
           );
         }
       }
-    } catch (e, stackTrace) {
-              developer.log('通知設定エラー: $e\nスタックトレース: $stackTrace');
+    } catch (e) {
+      developer.log('通知設定変更エラー: $e');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('通知設定エラー: $e'),
+                            content: Text(AppLocalizations.of(context)!.settingsNotificationSettingError(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -971,14 +973,14 @@ class SettingsScreen extends HookWidget {
   }
 
   /// 購入処理
-  static Future<void> _purchaseProduct(
+  Future<void> _purchaseProduct(
       BuildContext context,
       String productId,
-      ValueNotifier<bool> isLoading,
-      ValueNotifier<String?> selectedProductId,
       ) async {
-    isLoading.value = true;
-    selectedProductId.value = productId;
+    setState(() {
+      isLoadingMap[productId] = true;
+      selectedProductIdMap[productId] = productId;
+    });
 
     try {
       developer.log('実際の課金処理開始 - 商品ID: $productId');
@@ -1026,16 +1028,15 @@ class SettingsScreen extends HookWidget {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                '${PurchaseService.instance.getProductDisplayName(productId)}'
-                    'を購入しました！',
+                AppLocalizations.of(context)!.settingsPurchaseSuccess(PurchaseService.instance.getProductDisplayName(productId, context)),
               ),
               backgroundColor: Colors.green,
             ),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('購入に失敗しました。しばらく時間をおいて再度お試しください。'),
+                        SnackBar(
+              content: Text(AppLocalizations.of(context)!.settingsPurchaseFailed),
               backgroundColor: Colors.red,
               duration: Duration(seconds: 5),
             ),
@@ -1046,15 +1047,17 @@ class SettingsScreen extends HookWidget {
       developer.log('購入処理でエラーが発生: $e\nスタックトレース: $stackTrace');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('購入処理でエラーが発生しました。しばらく時間をおいて再度お試しください。'),
-            backgroundColor: Colors.red,
-          ),
+                      SnackBar(
+              content: Text(AppLocalizations.of(context)!.settingsPurchaseError),
+              backgroundColor: Colors.red,
+            ),
         );
       }
     } finally {
-      isLoading.value = false;
-      selectedProductId.value = null;
+      setState(() {
+        isLoadingMap[productId] = false;
+        selectedProductIdMap[productId] = null;
+      });
     }
   }
 
@@ -1064,8 +1067,8 @@ class SettingsScreen extends HookWidget {
       await PurchaseService.instance.restorePurchases();
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('購入履歴の復元を開始しました'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.purchaseRestoreStarted),
             backgroundColor: Colors.blue,
           ),
         );
@@ -1074,8 +1077,8 @@ class SettingsScreen extends HookWidget {
       developer.log('購入履歴復元エラー: $e\nスタックトレース: $stackTrace');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('購入履歴の復元に失敗しました。しばらく時間をおいて再度お試しください。'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.purchaseRestoreFailedRetry),
             backgroundColor: Colors.red,
           ),
         );
@@ -1092,12 +1095,14 @@ class SettingsScreen extends HookWidget {
     } else if (productId == PurchaseService.tap100) {
       return 300; // 300円
     } else if (productId == PurchaseService.tap1000) {
-      return 3000; // 3,000円
-    } else if (productId == PurchaseService.tap1M) {
-      return 30000; // 30,000円
-    } else if (productId == PurchaseService.tap100M) {
-      return 150000; // 150,000円
-    } else {
+      return 1000; // 1,000円
+    }
+    // else if (productId == PurchaseService.tap1M) {
+    //   return 30000; // 30,000円
+    // } else if (productId == PurchaseService.tap100M) {
+    //   return 150000; // 150,000円
+    // }
+    else {
       return 9999; // 不明な商品は最後に表示
     }
   }

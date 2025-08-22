@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../config/theme_config.dart';
 import '../services/data_service.dart';
+import '../l10n/app_localizations.dart';
 
 /// レベル表示ウィジェット
 /// 現在のレベルとレベルアップ演出を表示
@@ -61,14 +62,14 @@ class LevelDisplay extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: Text(
-                  'Lv.$currentLevel',
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                child:                   Text(
+                    '${AppLocalizations.of(context)!.levelDisplayLevel}$currentLevel',
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
               ),
               
               const SizedBox(height: 16),
@@ -80,7 +81,7 @@ class LevelDisplay extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        '次のレベルまで',
+                        AppLocalizations.of(context)!.levelDisplayNextLevel,
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey[600],

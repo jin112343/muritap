@@ -87,7 +87,7 @@ class StatsService {
   }
 
   /// 過去30日間の統計を取得
-  Future<List<DailyStats>> getLast30DaysStats() async {
+  Future<List<DailyStats>> getLast30DaysStats({String? monday, String? tuesday, String? wednesday, String? thursday, String? friday, String? saturday, String? sunday}) async {
     final prefs = await SharedPreferences.getInstance();
     final dailyStatsJson = prefs.getString(_dailyStatsKey) ?? '{}';
     final dailyStats = Map<String, dynamic>.from(jsonDecode(dailyStatsJson));
@@ -103,7 +103,7 @@ class StatsService {
       stats.add(DailyStats(
         date: date,
         taps: taps,
-        dayName: _getDayName(date.weekday),
+        dayName: _getDayName(date.weekday, monday: monday, tuesday: tuesday, wednesday: wednesday, thursday: thursday, friday: friday, saturday: saturday, sunday: sunday),
       ));
     }
     
@@ -111,7 +111,7 @@ class StatsService {
   }
 
   /// 今週の統計を取得（月曜日から始まる）
-  Future<List<DailyStats>> getThisWeekStats() async {
+  Future<List<DailyStats>> getThisWeekStats({String? monday, String? tuesday, String? wednesday, String? thursday, String? friday, String? saturday, String? sunday}) async {
     final prefs = await SharedPreferences.getInstance();
     final dailyStatsJson = prefs.getString(_dailyStatsKey) ?? '{}';
     final dailyStats = Map<String, dynamic>.from(jsonDecode(dailyStatsJson));
@@ -132,7 +132,7 @@ class StatsService {
       stats.add(DailyStats(
         date: date,
         taps: taps,
-        dayName: _getDayName(date.weekday),
+        dayName: _getDayName(date.weekday, monday: monday, tuesday: tuesday, wednesday: wednesday, thursday: thursday, friday: friday, saturday: saturday, sunday: sunday),
       ));
     }
     
@@ -140,17 +140,19 @@ class StatsService {
   }
 
   /// 曜日名を取得
-  String _getDayName(int weekday) {
-    switch (weekday) {
-      case 1: return '月';
-      case 2: return '火';
-      case 3: return '水';
-      case 4: return '木';
-      case 5: return '金';
-      case 6: return '土';
-      case 7: return '日';
-      default: return '';
-    }
+  String _getDayName(int weekday, {String? monday, String? tuesday, String? wednesday, String? thursday, String? friday, String? saturday, String? sunday}) {
+    // デフォルトの日本語名
+    final defaultNames = {
+      1: monday ?? '月',
+      2: tuesday ?? '火',
+      3: wednesday ?? '水',
+      4: thursday ?? '木',
+      5: friday ?? '金',
+      6: saturday ?? '土',
+      7: sunday ?? '日',
+    };
+    
+    return defaultNames[weekday] ?? '';
   }
 
   /// 今日のタップ数を取得

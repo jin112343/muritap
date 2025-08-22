@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../config/app_config.dart';
 import 'dart:async'; // Completerを追加
-import 'dart:developer' as developer;
+
 import 'purchase_service.dart'; // 購入サービスをインポート
 
 /// 広告管理サービス
@@ -25,6 +25,15 @@ class AdService {
     try {
       // MobileAdsの初期化
       await MobileAds.instance.initialize();
+      
+      // テストデバイスの設定（開発・テスト用）
+      if (Platform.isIOS) {
+        MobileAds.instance.updateRequestConfiguration(
+          RequestConfiguration(
+            testDeviceIds: ['1bf085b3638f4517c42aac7c64581fa0'],
+          ),
+        );
+      }
       
       // 広告削除状態をチェック
       await updateAdsRemovedStatus();
@@ -305,13 +314,11 @@ class AdService {
 
   /// 広告を非表示にする
   void hideAd() {
-    final previousStatus = _isAdVisible;
     _isAdVisible = false;
   }
 
   /// 広告を表示する
   void showAd() {
-    final previousStatus = _isAdVisible;
     _isAdVisible = true;
     
     // 広告が表示可能になった場合、バナー広告を再読み込み

@@ -26,7 +26,7 @@ class ShareService {
   }
 
   /// スクリーンショットを撮影して共有
-  Future<void> shareScreenshot(GlobalKey screenshotKey, {String? text}) async {
+  Future<void> shareScreenshot(GlobalKey screenshotKey, {String? text, String? subject}) async {
     try {
       // スクリーンショットを撮影
       final RenderRepaintBoundary boundary = screenshotKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
@@ -43,7 +43,7 @@ class ShareService {
       await Share.shareXFiles(
         [XFile(file.path)],
         text: text ?? '絶対ムリタップで遊んでいます！',
-        subject: '絶対ムリタップ',
+        subject: subject ?? '絶対ムリタップ',
       );
     } catch (e) {
       print('Error sharing screenshot: $e');
@@ -51,8 +51,8 @@ class ShareService {
   }
 
   /// アプリの情報を共有
-  Future<void> shareAppInfo() async {
-    const appInfo = '''
+  Future<void> shareAppInfo({String? appInfo, String? subject}) async {
+    final defaultAppInfo = '''
 絶対ムリタップ
 
 🎮 中毒性抜群のタップゲーム
@@ -64,6 +64,6 @@ class ShareService {
 #絶対ムリタップ #タップゲーム #ゲーム
 ''';
 
-    await shareText(appInfo, subject: '絶対ムリタップ');
+    await shareText(appInfo ?? defaultAppInfo, subject: subject ?? '絶対ムリタップ');
   }
 } 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../config/theme_config.dart';
+import '../l10n/app_localizations.dart';
 
 /// 統計情報表示ウィジェット
 /// 累積タップ数とレベル情報を表示
@@ -26,9 +27,9 @@ class StatsDisplay extends StatelessWidget {
       if (thousands >= 10000) {
         final tenThousands = (thousands / 10000).floor();
         final thousandsRemainder = thousands % 10000;
-        tapDisplayText = '${tenThousands}万${thousandsRemainder}千';
+        tapDisplayText = '${tenThousands}${AppLocalizations.of(context)!.statsDisplayTenThousand}${thousandsRemainder}${AppLocalizations.of(context)!.statsDisplayThousand}';
       } else {
-        tapDisplayText = '${thousands}千';
+        tapDisplayText = '${thousands}${AppLocalizations.of(context)!.statsDisplayThousand}';
       }
       
       if (remainder > 0) {
@@ -94,9 +95,9 @@ class StatsDisplay extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 8),
-            const Text(
-              '累積タップ数',
-              style: TextStyle(
+            Text(
+              AppLocalizations.of(context)!.statsDisplayTotalTaps,
+              style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
                 color: Colors.grey,

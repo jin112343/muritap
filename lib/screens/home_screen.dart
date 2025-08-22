@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'dart:async';
 import 'dart:developer' as developer;
 import 'package:shared_preferences/shared_preferences.dart'; // SharedPreferencesを追加
@@ -15,11 +14,160 @@ import '../services/game_center_service.dart';
 import '../services/title_service.dart';
 import '../services/stats_service.dart';
 import '../widgets/tap_button.dart';
+import '../l10n/app_localizations.dart';
 
 /// ホーム画面
 /// メインのタップ機能とレベル表示を提供
-class HomeScreen extends HookWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
+  // 状態変数
+  int totalTaps = 0;
+  int currentLevel = 1;
+  bool isLevelUp = false;
+  bool isProcessingTap = false;
+  
+  // アニメーションコントローラー
+  late AnimationController tapAnimationController;
+  late AnimationController levelUpAnimationController;
+  late AnimationController levelUpNotificationController;
+  
+  // 動画再生の状態
+  bool isRewardedAdLoaded = false;
+  
+  // バナー広告の読み込み状態
+  bool isBannerAdLoaded = false;
+  
+  // 新しい機能の状態
+  bool showTutorial = false;
+  bool showDailyChallenge = false;
+  bool showAchievements = false;
+  
+  // デイリーチャレンジの状態
+  int dailyChallengeProgress = 0;
+  int dailyChallengeTarget = 100;
+  int dailyChallengeReward = 50;
+  
+  // アチーブメントの状態
+  List<Map<String, dynamic>> achievements = [];
+  
+  // タイマー
+  Timer? _dataTimer;
+  Timer? _adTimer;
+  Timer? _statsTimer;
+  
+  // スクリーンショット用のキー
+  final GlobalKey screenshotKey = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+    
+    // アニメーションコントローラーを初期化
+    tapAnimationController = AnimationController(
+      duration: AppConfig.tapAnimationDuration,
+      vsync: this,
+    );
+    levelUpAnimationController = AnimationController(
+      duration: AppConfig.levelUpAnimationDuration,
+      vsync: this,
+    );
+    levelUpNotificationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    
+    // 初期データを読み込み
+    _loadInitialData();
+    
+    // 広告を読み込み
+    _loadAds();
+    
+    // データの変更を監視
+    _startDataMonitoring();
+    
+    // 広告の状態を定期的にチェック
+    _startAdMonitoring();
+  }
+
+  @override
+  void dispose() {
+    _dataTimer?.cancel();
+    _adTimer?.cancel();
+    _statsTimer?.cancel();
+    tapAnimationController.dispose();
+    levelUpAnimationController.dispose();
+    levelUpNotificationController.dispose();
+    super.dispose();
+  }
+
+  // 初期データを読み込み
+  void _loadInitialData() {
+    totalTaps = DataService.instance.getTotalTaps();
+    currentLevel = DataService.instance.getCurrentLevel();
+    developer.log('初期データ読み込み完了: タップ数=$totalTaps, レベル=$currentLevel');
+  }
+
+  // 広告を読み込み
+  void _loadAds() {
+    AdService.instance.loadBannerAd();
+    AdService.instance.loadRewardedAd();
+  }
+
+  // データの変更を監視
+  void _startDataMonitoring() {
+    _dataTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
+      final newTotalTaps = DataService.instance.getTotalTaps();
+      final newCurrentLevel = DataService.instance.getCurrentLevel();
+      
+      if (newTotalTaps != totalTaps) {
+        setState(() {
+          totalTaps = newTotalTaps;
+        });
+      }
+      
+      if (newCurrentLevel != currentLevel) {
+        setState(() {
+          currentLevel = newCurrentLevel;
+        });
+      }
+    });
+  }
+
+  // 広告の状態を定期的にチェック
+  void _startAdMonitoring() {
+    _adTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      final currentBannerLoaded = AdService.instance.isBannerAdLoaded;
+      final currentRewardedLoaded = AdService.instance.isRewardedAdLoaded;
+      
+      if (currentBannerLoaded != isBannerAdLoaded) {
+        setState(() {
+          isBannerAdLoaded = currentBannerLoaded;
+        });
+      }
+      
+      if (currentRewardedLoaded != isRewardedAdLoaded) {
+        setState(() {
+          isRewardedAdLoaded = currentRewardedLoaded;
+        });
+      }
+    });
+    
+    // 動画広告の読み込み状態を監視
+    _statsTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      final currentRewardedLoaded = AdService.instance.isRewardedAdLoaded;
+      if (currentRewardedLoaded != isRewardedAdLoaded) {
+        setState(() {
+          isRewardedAdLoaded = currentRewardedLoaded;
+        });
+      }
+    });
+  }
 
   // プログレスバーの進捗率を計算（経験値方式）
   double _getProgressFactor(int currentLevel, int totalTaps) {
@@ -65,14 +213,11 @@ class HomeScreen extends HookWidget {
             children: [
               Icon(Icons.star, color: Colors.amber, size: 28),
               const SizedBox(width: 8),
-              const Text('100回タップ達成！'),
+              Text(AppLocalizations.of(context)!.homeRatingDialogTitle),
             ],
           ),
-          content: const Text(
-            '🎉 おめでとうございます！100回タップを達成しました！\n\n'
-            'このアプリを楽しんでいただけましたか？\n'
-            'もし良かったら、App Storeで5つ星評価をしていただけませんか？\n\n'
-            'あなたの評価が、アプリの改善に役立ちます。',
+          content: Text(
+            AppLocalizations.of(context)!.homeRatingDialogContent,
             style: TextStyle(fontSize: 16),
           ),
           actions: [
@@ -80,7 +225,7 @@ class HomeScreen extends HookWidget {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text('後で'),
+              child: Text(AppLocalizations.of(context)!.homeRatingDialogLater),
             ),
             ElevatedButton.icon(
               onPressed: () {
@@ -89,7 +234,7 @@ class HomeScreen extends HookWidget {
                 _requestAppStoreReview();
               },
               icon: const Icon(Icons.star_rate),
-              label: const Text('App Storeで評価'),
+              label: Text(AppLocalizations.of(context)!.homeRatingDialogRateOnAppStore),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.amber,
                 foregroundColor: Colors.white,
@@ -167,9 +312,9 @@ class HomeScreen extends HookWidget {
   void _skipToCurrentLevel(
     BuildContext context, 
     int currentTotalTaps, 
-    ValueNotifier<int> totalTapsNotifier,
-    ValueNotifier<int> currentLevelNotifier,
-    ValueNotifier<bool> isLevelUpNotifier,
+    int totalTaps,
+    int currentLevel,
+    bool isLevelUp,
     AnimationController levelUpAnimationController,
   ) async {
     try {
@@ -195,12 +340,12 @@ class HomeScreen extends HookWidget {
         developer.log('現在のタップ数で到達可能な最高レベル: Lv.$maxAchievableLevel');
         
         // 現在のレベルが到達可能な最高レベルより低い場合
-        if (currentLevelNotifier.value < maxAchievableLevel) {
+        if (currentLevel < maxAchievableLevel) {
         // 確認ダイアログを表示
         final confirmed = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('レベルスキップ'),
+            title: Text(AppLocalizations.of(context)!.dialogsLevelSkipTitle),
             content: Text(
               '現在のタップ数で行ける最高レベル（Lv.$maxAchievableLevel）までスキップしますか？\n\n'
               '現在のタップ数: ${_formatTapCount(currentTotalTaps, context)}\n'
@@ -210,7 +355,7 @@ class HomeScreen extends HookWidget {
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('キャンセル'),
+                child: Text(AppLocalizations.of(context)!.dialogsLevelSkipCancel),
               ),
               ElevatedButton(
                 onPressed: () => Navigator.of(context).pop(true),
@@ -218,7 +363,7 @@ class HomeScreen extends HookWidget {
                   backgroundColor: ThemeConfig.primaryColor,
                   foregroundColor: Colors.white,
                 ),
-                child: const Text('スキップ'),
+                child: Text(AppLocalizations.of(context)!.dialogsLevelSkipSkip),
               ),
             ],
           ),
@@ -245,10 +390,12 @@ class HomeScreen extends HookWidget {
           
           // 強制的にUIを再構築するために、状態変数を更新
           // タップ数は変更せず、レベルとレベルアップ状態のみ更新
-          currentLevelNotifier.value = newLevel;
-          isLevelUpNotifier.value = true;
+          setState(() {
+            currentLevel = newLevel;
+            isLevelUp = true;
+          });
           
-          developer.log('UIの強制再構築を実行: タップ数=${totalTapsNotifier.value}（変更なし）, レベル=${currentLevelNotifier.value}, レベルアップ=${isLevelUpNotifier.value}');
+          developer.log('UIの強制再構築を実行: タップ数=$totalTaps（変更なし）, レベル=$currentLevel, レベルアップ=$isLevelUp');
           
           // さらに確実にするために、もう一度少し待つ
           await Future.delayed(const Duration(milliseconds: 50));
@@ -256,15 +403,17 @@ class HomeScreen extends HookWidget {
           // 確実にUIが更新されるように、状態変数を再度設定
           if (context.mounted) {
             // 強制的に再構築を促す
-            currentLevelNotifier.value = currentLevelNotifier.value;
-            isLevelUpNotifier.value = isLevelUpNotifier.value;
+            setState(() {
+              currentLevel = currentLevel;
+              isLevelUp = isLevelUp;
+            });
             developer.log('状態変数の強制更新完了');
           }
           
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Lv.$maxAchievableLevelまでスキップしました！'),
+                content: Text(AppLocalizations.of(context)!.homeSkipSuccess(maxAchievableLevel.toString())),
                 backgroundColor: Colors.green,
               ),
             );
@@ -287,8 +436,8 @@ class HomeScreen extends HookWidget {
         developer.log('既に最高レベルに到達しています');
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('既に最高レベルに到達しています。'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.homeAlreadyMaxLevel),
               backgroundColor: Colors.orange,
             ),
           );
@@ -299,7 +448,7 @@ class HomeScreen extends HookWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('スキップ処理でエラーが発生しました: $e'),
+            content: Text(AppLocalizations.of(context)!.homeSkipError(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -309,131 +458,39 @@ class HomeScreen extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final totalTaps = useState(0);
-    final currentLevel = useState(1);
-    final isLevelUp = useState(false);
-    final isProcessingTap = useState(false); // タップ処理中フラグ
-    final tapAnimationController = useAnimationController(
-      duration: AppConfig.tapAnimationDuration,
-    );
-    final levelUpAnimationController = useAnimationController(
-      duration: AppConfig.levelUpAnimationDuration,
-    );
-    final levelUpNotificationController = useAnimationController(
-      duration: const Duration(milliseconds: 300),
-      initialValue: 0.0,
-    );
-    
-    // 動画再生の状態
-    final isRewardedAdLoaded = useState(AdService.instance.isRewardedAdLoaded);
-    
-    // バナー広告の読み込み状態を監視
-    final isBannerAdLoaded = useState(AdService.instance.isBannerAdLoaded);
-    
-    // 初期データを読み込み
-    useEffect(() {
-      totalTaps.value = DataService.instance.getTotalTaps();
-      currentLevel.value = DataService.instance.getCurrentLevel();
-      developer.log('初期データ読み込み完了: タップ数=${totalTaps.value}, レベル=${currentLevel.value}');
-      return null;
-    }, []);
-    
-    // 新しい機能の状態
-    final showTutorial = useState(false);
-    final showDailyChallenge = useState(false);
-    final showAchievements = useState(false);
-    
-    // デイリーチャレンジの状態
-    final dailyChallengeProgress = useState(0);
-    final dailyChallengeTarget = useState(100);
-    final dailyChallengeReward = useState(50);
-    
-    // アチーブメントの状態
-    final achievements = useState<List<Map<String, dynamic>>>([]);
-    
-    // 広告の状態を定期的にチェック
-    useEffect(() {
-      final timer = Timer.periodic(const Duration(seconds: 5), (timer) {
-        final currentBannerLoaded = AdService.instance.isBannerAdLoaded;
-        final currentRewardedLoaded = AdService.instance.isRewardedAdLoaded;
-        
-        if (currentBannerLoaded != isBannerAdLoaded.value) {
-          isBannerAdLoaded.value = currentBannerLoaded;
-        }
-        
-        if (currentRewardedLoaded != isRewardedAdLoaded.value) {
-          isRewardedAdLoaded.value = currentRewardedLoaded;
-        }
-      });
-      
-      return timer.cancel;
-    }, []);
-
-    // スクリーンショット用のキー
-    final screenshotKey = useMemoized(() => GlobalKey(), []);
-
-    // 初期化時に広告を読み込み
-    useEffect(() {
-      AdService.instance.loadBannerAd();
-      AdService.instance.loadRewardedAd();
-      
-      // 動画広告の読み込み状態を監視
-      final timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-        isRewardedAdLoaded.value = AdService.instance.isRewardedAdLoaded;
-      });
-      
-      return () => timer.cancel();
-    }, []);
-
-    // データの変更を監視し、定期的に状態を更新
-    useEffect(() {
-      final timer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
-        final newTotalTaps = DataService.instance.getTotalTaps();
-        final newCurrentLevel = DataService.instance.getCurrentLevel();
-        
-        if (newTotalTaps != totalTaps.value) {
-          totalTaps.value = newTotalTaps;
-        }
-        
-        if (newCurrentLevel != currentLevel.value) {
-          currentLevel.value = newCurrentLevel;
-        }
-      });
-      
-      return () => timer.cancel();
-    }, []);
+    // クラス変数を使用（フックは削除済み）
 
 
 
     // アチーブメントを更新する関数
-    void updateAchievements() {
+    List<Map<String, dynamic>> updateAchievements() {
       final newAchievements = <Map<String, dynamic>>[];
       
       // レベルアチーブメント
-      if (currentLevel.value >= 10) {
+      if (currentLevel >= 10) {
         newAchievements.add({
-          'title': 'レベル10達成',
-          'description': 'レベル10に到達しました',
+          'title': AppLocalizations.of(context)!.achievementLevel10Title,
+          'description': AppLocalizations.of(context)!.achievementLevel10Description,
           'icon': Icons.star,
           'color': Colors.amber,
           'completed': true,
         });
       }
       
-      if (currentLevel.value >= 50) {
+      if (currentLevel >= 50) {
         newAchievements.add({
-          'title': 'レベル50達成',
-          'description': 'レベル50に到達しました',
+          'title': AppLocalizations.of(context)!.achievementLevel50Title,
+          'description': AppLocalizations.of(context)!.achievementLevel50Description,
           'icon': Icons.star,
           'color': Colors.orange,
           'completed': true,
         });
       }
       
-      if (currentLevel.value >= 100) {
+      if (currentLevel >= 100) {
         newAchievements.add({
-          'title': 'レベル100達成',
-          'description': 'レベル100に到達しました',
+          'title': AppLocalizations.of(context)!.achievementLevel100Title,
+          'description': AppLocalizations.of(context)!.achievementLevel100Description,
           'icon': Icons.star,
           'color': Colors.red,
           'completed': true,
@@ -441,73 +498,73 @@ class HomeScreen extends HookWidget {
       }
       
       // タップ数アチーブメント
-      if (totalTaps.value >= 1000) {
+      if (totalTaps >= 1000) {
         newAchievements.add({
-          'title': '1000タップ達成',
-          'description': '1000回タップしました',
+          'title': AppLocalizations.of(context)!.achievement1000TapsTitle,
+          'description': AppLocalizations.of(context)!.achievement1000TapsDescription,
           'icon': Icons.touch_app,
           'color': Colors.blue,
           'completed': true,
         });
       }
       
-      if (totalTaps.value >= 10000) {
+      if (totalTaps >= 10000) {
         newAchievements.add({
-          'title': '10000タップ達成',
-          'description': '10000回タップしました',
+          'title': AppLocalizations.of(context)!.achievement10000TapsTitle,
+          'description': AppLocalizations.of(context)!.achievement10000TapsDescription,
           'icon': Icons.touch_app,
           'color': Colors.green,
           'completed': true,
         });
       }
       
-      achievements.value = newAchievements;
+      return newAchievements;
     }
 
 
 
     // アチーブメントを更新
-    useEffect(() {
-      updateAchievements();
-      return null;
-    }, [totalTaps.value, currentLevel.value]);
+    achievements = updateAchievements();
 
     // デイリーチャレンジを開始
     void startDailyChallenge() {
       // 今日既に完了済みの場合は開始できない
       if (DataService.instance.isDailyChallengeCompletedToday()) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('今日のデイリーチャレンジは既に完了済みです。明日また挑戦してください！'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.dailyChallengeAlreadyCompleted),
             backgroundColor: Colors.orange,
           ),
         );
         return;
       }
       
-      showDailyChallenge.value = true;
-      dailyChallengeProgress.value = 0;
-      dailyChallengeTarget.value = 100 + (currentLevel.value * 10);
-      dailyChallengeReward.value = 50 + (currentLevel.value * 5);
+      setState(() {
+        showDailyChallenge = true;
+        dailyChallengeProgress = 0;
+        dailyChallengeTarget = 100 + (currentLevel * 10);
+        dailyChallengeReward = 50 + (currentLevel * 5);
+      });
     }
 
     // デイリーチャレンジを完了
     void completeDailyChallenge() async {
-      if (dailyChallengeProgress.value >= dailyChallengeTarget.value) {
+      if (dailyChallengeProgress >= dailyChallengeTarget) {
         // 報酬を付与
-        final reward = dailyChallengeReward.value;
-        final newTotalTaps = totalTaps.value + reward;
-        totalTaps.value = newTotalTaps;
+        final reward = dailyChallengeReward;
+        final newTotalTaps = totalTaps + reward;
+        setState(() {
+          totalTaps = newTotalTaps;
+          showDailyChallenge = false;
+        });
         await DataService.instance.saveTotalTaps(newTotalTaps);
         
         // デイリーチャレンジ完了日時を保存
         await DataService.instance.saveDailyChallengeCompletedDate();
         
-        showDailyChallenge.value = false;
-        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('デイリーチャレンジ完了！${reward}タップを獲得しました'),
+            content: Text(AppLocalizations.of(context)!.dailyChallengeCompleted(reward.toString())),
             backgroundColor: Colors.green,
           ),
         );
@@ -516,21 +573,21 @@ class HomeScreen extends HookWidget {
 
     // 動画再生ボタンの処理（ポップアップ表示）
     void onWatchAd() async {
-      if (isRewardedAdLoaded.value) {
+      if (isRewardedAdLoaded) {
         // 確認ダイアログを表示
         final confirmed = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('動画広告'),
-            content: const Text('動画広告を視聴して報酬を獲得しますか？\n\n視聴完了後、250タップを獲得できます。'),
+            title: Text(AppLocalizations.of(context)!.videoAdTitle),
+            content: Text(AppLocalizations.of(context)!.videoAdDescription),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('キャンセル'),
+                child: Text(AppLocalizations.of(context)!.cancel),
               ),
               TextButton(
                 onPressed: () => Navigator.of(context).pop(true),
-                child: const Text('視聴する'),
+                child: Text(AppLocalizations.of(context)!.watchVideo),
               ),
             ],
           ),
@@ -538,7 +595,7 @@ class HomeScreen extends HookWidget {
 
         if (confirmed == true) {
           developer.log('=== 動画再生開始 ===');
-          developer.log('現在の総タップ数: ${totalTaps.value}');
+          developer.log('現在の総タップ数: $totalTaps');
           developer.log('現在の実際タップ数: ${DataService.instance.getRealTapCount()}');
           developer.log('現在の統計タップ数: ${await StatsService.instance.getTodayTaps()}');
           developer.log('現在の実際統計タップ数: ${await StatsService.instance.getTodayActualTaps()}');
@@ -590,15 +647,19 @@ class HomeScreen extends HookWidget {
               await Future.delayed(const Duration(milliseconds: 100));
               
               // UIを更新
-              totalTaps.value = DataService.instance.getTotalTaps();
-              developer.log('UI更新後の総タップ数: ${totalTaps.value}');
+                      setState(() {
+          totalTaps = DataService.instance.getTotalTaps();
+        });
+        developer.log('UI更新後の総タップ数: $totalTaps');
 
               // リワード広告を再読み込み
               await AdService.instance.loadRewardedAd();
               
               // リアルタイム更新を強制実行
-              totalTaps.value = DataService.instance.getTotalTaps();
-              developer.log('強制更新後の総タップ数: ${totalTaps.value}');
+                      setState(() {
+          totalTaps = DataService.instance.getTotalTaps();
+        });
+        developer.log('強制更新後の総タップ数: $totalTaps');
               
               developer.log('=== 動画報酬処理完了 ===');
               developer.log('最終確認 - 総タップ数: ${DataService.instance.getTotalTaps()}, 実際タップ数: ${DataService.instance.getRealTapCount()}');
@@ -606,7 +667,7 @@ class HomeScreen extends HookWidget {
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('動画視聴完了！250タップを獲得しました'),
+                    content: Text(AppLocalizations.of(context)!.homeVideoAdSuccess),
                     backgroundColor: Colors.green,
                   ),
                 );
@@ -616,8 +677,8 @@ class HomeScreen extends HookWidget {
               // 動画視聴に失敗した場合
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('動画視聴に失敗しました。報酬は獲得できませんでした。'),
+                  SnackBar(
+                    content: Text(AppLocalizations.of(context)!.videoAdFailed),
                     backgroundColor: Colors.red,
                   ),
                 );
@@ -631,7 +692,7 @@ class HomeScreen extends HookWidget {
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('動画視聴完了！250タップを獲得しました（エラーが発生しましたが報酬は付与されます）'),
+                  content: Text(AppLocalizations.of(context)!.videoAdCompletedWithError),
                   backgroundColor: Colors.orange,
                 ),
               );
@@ -643,8 +704,8 @@ class HomeScreen extends HookWidget {
       } else {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('動画広告の読み込み中です。しばらく待ってから再試行してください。'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.homeVideoAdLoading),
               backgroundColor: Colors.orange,
             ),
           );
@@ -663,12 +724,7 @@ class HomeScreen extends HookWidget {
       try {
         await ShareService.instance.shareScreenshot(
           screenshotKey,
-          text: '''絶対ムリタップで
-レベル${currentLevel.value}で
-総タップ数${totalTaps.value}回達成！
-あなたもランキングに参加しよう！
-アプリダウンロードはこちら(ios):
-https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
+          text: AppLocalizations.of(context)!.homeShareText(currentLevel.toString(), totalTaps.toString()),
         );
       } finally {
         // 共有完了後、広告を再表示
@@ -679,12 +735,14 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
     // タップ処理
     void onTap() async {
       // 既に処理中の場合は無視
-      if (isProcessingTap.value) {
+      if (isProcessingTap) {
         return;
       }
       
       // 処理中フラグを設定
-      isProcessingTap.value = true;
+      setState(() {
+        isProcessingTap = true;
+      });
       
       try {
         // SharedPreferencesを取得
@@ -700,8 +758,10 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
         
         // タップ数を増加（倍率を適用）
         final tapIncrement = 1 * tapMultiplier;
-        final newTotalTaps = totalTaps.value + tapIncrement;
-        totalTaps.value = newTotalTaps;
+        final newTotalTaps = totalTaps + tapIncrement;
+        setState(() {
+          totalTaps = newTotalTaps;
+        });
 
         // データを保存
         await DataService.instance.saveTotalTaps(newTotalTaps);
@@ -716,9 +776,11 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
         await DataService.instance.saveRealTapCount(currentRealTaps + 1);
 
         // デイリーチャレンジの進捗を更新
-        if (showDailyChallenge.value) {
-          dailyChallengeProgress.value += tapIncrement;
-          if (dailyChallengeProgress.value >= dailyChallengeTarget.value) {
+        if (showDailyChallenge) {
+          setState(() {
+            dailyChallengeProgress += tapIncrement;
+          });
+          if (dailyChallengeProgress >= dailyChallengeTarget) {
             completeDailyChallenge();
           }
         }
@@ -727,7 +789,9 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
         final currentLevelForCheck = DataService.instance.getCurrentLevel();
         if (DataService.instance.isLevelUp(newTotalTaps, currentLevelForCheck)) {
           final newLevel = currentLevelForCheck + 1;
-          currentLevel.value = newLevel;
+          setState(() {
+            currentLevel = newLevel;
+          });
           
           // レベルアップデータを保存
           await DataService.instance.saveCurrentLevel(newLevel);
@@ -736,10 +800,14 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
           }
 
           // レベルアップ演出
-          isLevelUp.value = true;
+          setState(() {
+            isLevelUp = true;
+          });
           levelUpAnimationController.forward().then((_) {
             levelUpAnimationController.reverse();
-            isLevelUp.value = false;
+            setState(() {
+              isLevelUp = false;
+            });
           });
           
           // レベルアップ通知（レベルアップ時のみ）
@@ -819,7 +887,9 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
       } finally {
         // 処理完了後、少し待ってからフラグをリセット（デバウンス）
         Future.delayed(const Duration(milliseconds: 50), () {
-          isProcessingTap.value = false;
+          setState(() {
+          isProcessingTap = false;
+        });
         });
       }
     }
@@ -829,7 +899,7 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
         Scaffold(
           appBar: AppBar(
             title: Text(
-              'MURITAP',
+              AppLocalizations.of(context)!.appTitle,
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 color: ThemeConfig.primaryColor,
@@ -846,25 +916,29 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
                 onSelected: (value) {
                   switch (value) {
                     case 'tutorial':
-                      showTutorial.value = true;
+                      setState(() {
+          showTutorial = true;
+        });
                       break;
                                           case 'challenge':
                         startDailyChallenge();
                         break;
                     case 'achievements':
-                      showAchievements.value = true;
+                      setState(() {
+          showAchievements = true;
+        });
                       break;
 
                   }
                 },
                 itemBuilder: (context) => [
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'tutorial',
                     child: Row(
                       children: [
-                        Icon(Icons.help_outline),
-                        SizedBox(width: 8),
-                        Text('チュートリアル'),
+                        const Icon(Icons.help_outline),
+                        const SizedBox(width: 8),
+                        Text(AppLocalizations.of(context)!.tutorialTitle),
                       ],
                     ),
                   ),
@@ -883,19 +957,19 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
                         const SizedBox(width: 8),
                         Text(
                           DataService.instance.isDailyChallengeCompletedToday() 
-                            ? 'デイリーチャレンジ（完了済み）' 
-                            : 'デイリーチャレンジ',
+                            ? AppLocalizations.of(context)!.dailyChallengeCompletedShort
+                            : AppLocalizations.of(context)!.dailyChallengeTitle,
                         ),
                       ],
                     ),
                   ),
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'achievements',
                     child: Row(
                       children: [
-                        Icon(Icons.workspace_premium),
-                        SizedBox(width: 8),
-                        Text('アチーブメント'),
+                        const Icon(Icons.workspace_premium),
+                        const SizedBox(width: 8),
+                        Text(AppLocalizations.of(context)!.achievementTitle),
                       ],
                     ),
                   ),
@@ -907,11 +981,11 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
                 onPressed: onWatchAd,
                 icon: Icon(
                   Icons.play_circle_outline,
-                  color: isRewardedAdLoaded.value 
+                  color: isRewardedAdLoaded 
                     ? ThemeConfig.primaryColor 
                     : Colors.grey,
                 ),
-                tooltip: '動画を見て報酬を獲得',
+                tooltip: AppLocalizations.of(context)!.watchVideoTooltip,
               ),
               // 共有ボタン
               IconButton(
@@ -955,7 +1029,7 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              'Lv.${currentLevel.value}',
+                              'Lv.$currentLevel',
                               style: TextStyle(
                                 fontSize: 30,
                                 fontWeight: FontWeight.bold,
@@ -970,10 +1044,10 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: TitleService.instance.getTitleColor(currentLevel.value).withValues(alpha: 0.2),
+                            color: TitleService.instance.getTitleColor(currentLevel).withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: TitleService.instance.getTitleColor(currentLevel.value),
+                              color: TitleService.instance.getTitleColor(currentLevel),
                               width: 1,
                             ),
                           ),
@@ -981,19 +1055,19 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                TitleService.instance.getTitleIcon(currentLevel.value),
-                                color: TitleService.instance.getTitleColor(currentLevel.value),
+                                TitleService.instance.getTitleIcon(currentLevel),
+                                color: TitleService.instance.getTitleColor(currentLevel),
                                 size: 16,
                               ),
                               const SizedBox(width: 6),
-                              Text(
-                                TitleService.instance.getTitle(currentLevel.value),
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: TitleService.instance.getTitleColor(currentLevel.value),
+                                                              Text(
+                                  TitleService.instance.getTitle(currentLevel, context),
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: TitleService.instance.getTitleColor(currentLevel),
+                                  ),
                                 ),
-                              ),
                             ],
                           ),
                         ),
@@ -1006,20 +1080,20 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                     child: Column(
                       children: [
-                        Text(
-                          'TOTAL TAPS',
-                          style: TextStyle(
-                            fontSize: 30,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.grey[400],
-                            letterSpacing: 1.2,
+                                                  Text(
+                            AppLocalizations.of(context)!.homeTotalTapsLabel,
+                            style: TextStyle(
+                              fontSize: 30,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey[400],
+                              letterSpacing: 1.2,
+                            ),
                           ),
-                        ),
                         const SizedBox(height: 4),
                         FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Text(
-                            _formatTapCount(totalTaps.value, context),
+                            _formatTapCount(totalTaps, context),
                             style: TextStyle(
                               fontSize: 64,
                               fontWeight: FontWeight.bold,
@@ -1082,7 +1156,7 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'NEXT LEVEL',
+                              AppLocalizations.of(context)!.homeNextLevelLabel,
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w500,
@@ -1091,7 +1165,7 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
                               ),
                             ),
                             Text(
-                              'Lv.${currentLevel.value + 1}',
+                              'Lv.${currentLevel + 1}',
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
@@ -1102,7 +1176,7 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
                         ),
                         const SizedBox(height: 4),
                         LinearProgressIndicator(
-                          value: _getProgressFactor(currentLevel.value, totalTaps.value),
+                          value: _getProgressFactor(currentLevel, totalTaps),
                           backgroundColor: Colors.grey[800],
                           valueColor: AlwaysStoppedAnimation<Color>(ThemeConfig.primaryColor),
                           minHeight: 6,
@@ -1111,8 +1185,8 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
                         // 次のレベルまでの残りタップ数
                         Builder(
                           builder: (context) {
-                            final nextLevelRequired = DataService.instance.getRequiredTapsForLevel(currentLevel.value + 1);
-                            final remainingTaps = nextLevelRequired - totalTaps.value;
+                                    final nextLevelRequired = DataService.instance.getRequiredTapsForLevel(currentLevel + 1);
+        final remainingTaps = nextLevelRequired - totalTaps;
                             
                             // 既に次のレベルに達している場合
                             if (remainingTaps <= 0) {
@@ -1120,7 +1194,7 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                    '次のレベルに到達済み！',
+                                    AppLocalizations.of(context)!.homeNextLevelReached,
                                     style: TextStyle(
                                       fontSize: 14,
                                       color: ThemeConfig.primaryColor,
@@ -1128,15 +1202,15 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
                                     ),
                                   ),
                                   ElevatedButton(
-                                    onPressed: () => _skipToCurrentLevel(context, totalTaps.value, totalTaps, currentLevel, isLevelUp, levelUpAnimationController),
+                                    onPressed: () => _skipToCurrentLevel(context, totalTaps, totalTaps, currentLevel, isLevelUp, levelUpAnimationController),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: ThemeConfig.primaryColor,
                                       foregroundColor: Colors.white,
                                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                       minimumSize: const Size(0, 32),
                                     ),
-                                    child: const Text(
-                                      'スキップ',
+                                    child: Text(
+                                      AppLocalizations.of(context)!.homeSkipButton,
                                       style: TextStyle(
                                         fontSize: 12,
                                         fontWeight: FontWeight.bold,
@@ -1148,7 +1222,7 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
                             }
                             
                             return Text(
-                              'あと${remainingTaps}回でレベルアップ！',
+                              AppLocalizations.of(context)!.homeRemainingTapsToLevel(remainingTaps.toString()),
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.grey[400],
@@ -1162,7 +1236,7 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
                   ),
                   
                   // デイリーチャレンジ表示
-                  if (showDailyChallenge.value)
+                  if (showDailyChallenge)
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                       margin: const EdgeInsets.all(8),
@@ -1180,7 +1254,7 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                'デイリーチャレンジ',
+                                AppLocalizations.of(context)!.dailyChallengeTitle,
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -1188,7 +1262,7 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
                                 ),
                               ),
                               Text(
-                                '報酬: ${dailyChallengeReward.value}タップ',
+                                AppLocalizations.of(context)!.dailyChallengeReward(dailyChallengeReward.toString()),
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: Colors.orange,
@@ -1198,14 +1272,14 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
                           ),
                           const SizedBox(height: 8),
                           LinearProgressIndicator(
-                            value: dailyChallengeProgress.value / dailyChallengeTarget.value,
+                            value: dailyChallengeProgress / dailyChallengeTarget,
                             backgroundColor: Colors.grey[800],
                             valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
                             minHeight: 6,
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '${dailyChallengeProgress.value}/${dailyChallengeTarget.value}',
+                            '$dailyChallengeProgress/$dailyChallengeTarget',
                             style: TextStyle(
                               fontSize: 14,
                               color: Colors.grey[400],
@@ -1223,7 +1297,7 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
                         child: TapButton(
                           onTap: onTap,
                           animationController: tapAnimationController,
-                          isProcessing: isProcessingTap.value,
+                          isProcessing: isProcessingTap,
                         ),
                       ),
                     ),
@@ -1286,7 +1360,7 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
                       ),
                       const SizedBox(width: 12),
                       Text(
-                        'LEVEL UP! Lv.${currentLevel.value}',
+                        AppLocalizations.of(context)!.homeLevelUpNotification(currentLevel.toString()),
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -1309,12 +1383,20 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
         ),
         
         // チュートリアルダイアログ
-        if (showTutorial.value)
-          _buildTutorialDialog(context, () => showTutorial.value = false),
+        if (showTutorial)
+          _buildTutorialDialog(context, () {
+            setState(() {
+              showTutorial = false;
+            });
+          }),
         
         // アチーブメントダイアログ
-        if (showAchievements.value)
-          _buildAchievementsDialog(context, () => showAchievements.value = false),
+        if (showAchievements)
+          _buildAchievementsDialog(context, () {
+            setState(() {
+              showAchievements = false;
+            });
+          }),
         
 
       ],
@@ -1332,7 +1414,7 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'チュートリアル',
+              AppLocalizations.of(context)!.tutorialTitle,
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -1342,26 +1424,26 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
             const SizedBox(height: 20),
             _buildTutorialStep(
               icon: Icons.touch_app,
-              title: 'タップしてレベルアップ',
-              description: '中央のボタンをタップしてレベルを上げましょう。レベルが上がると称号が変わります。',
+              title: AppLocalizations.of(context)!.tutorialTapToLevelUp,
+              description: AppLocalizations.of(context)!.tutorialTapToLevelUpDescription,
             ),
             const SizedBox(height: 16),
             _buildTutorialStep(
               icon: Icons.play_circle_outline,
-              title: '動画で報酬獲得',
-              description: '動画広告を視聴して100タップの報酬を獲得できます。',
+              title: AppLocalizations.of(context)!.tutorialWatchVideoForReward,
+              description: AppLocalizations.of(context)!.tutorialWatchVideoForRewardDescription,
             ),
             const SizedBox(height: 16),
             _buildTutorialStep(
               icon: Icons.emoji_events,
-              title: 'デイリーチャレンジ',
-              description: '毎日のチャレンジをクリアして特別な報酬を獲得しましょう。',
+              title: AppLocalizations.of(context)!.tutorialDailyChallengeTitle,
+              description: AppLocalizations.of(context)!.tutorialDailyChallengeDescription,
             ),
             const SizedBox(height: 16),
             _buildTutorialStep(
               icon: Icons.workspace_premium,
-              title: 'アチーブメント',
-              description: '様々な目標を達成してアチーブメントを解除しましょう。',
+              title: AppLocalizations.of(context)!.tutorialAchievementTitle,
+              description: AppLocalizations.of(context)!.tutorialAchievementDescription,
             ),
             const SizedBox(height: 20),
             ElevatedButton(
@@ -1373,7 +1455,7 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
                   borderRadius: BorderRadius.circular(20),
                 ),
               ),
-              child: const Text('理解しました'),
+              child: Text(AppLocalizations.of(context)!.understood),
             ),
           ],
         ),
@@ -1434,7 +1516,7 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'アチーブメント',
+              AppLocalizations.of(context)!.achievementTitle,
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -1445,7 +1527,7 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
             SizedBox(
               height: 300,
               child: FutureBuilder<List<Map<String, dynamic>>>(
-                future: _getAchievements(),
+                future: _getAchievements(context),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
@@ -1522,7 +1604,7 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
                   borderRadius: BorderRadius.circular(20),
                 ),
               ),
-              child: const Text('閉じる'),
+              child: Text(AppLocalizations.of(context)!.close),
             ),
           ],
         ),
@@ -1531,7 +1613,7 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
   }
 
   // アチーブメントを取得
-  Future<List<Map<String, dynamic>>> _getAchievements() async {
+  Future<List<Map<String, dynamic>>> _getAchievements(BuildContext context) async {
     final currentLevel = DataService.instance.getCurrentLevel();
     final totalTaps = DataService.instance.getTotalTaps();
     final newAchievements = <Map<String, dynamic>>[];
@@ -1539,8 +1621,8 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
     // レベルアチーブメント
     if (currentLevel >= 10) {
       newAchievements.add({
-        'title': 'レベル10達成',
-        'description': 'レベル10に到達しました',
+        'title': AppLocalizations.of(context)!.homeAchievementLevel10Title,
+        'description': AppLocalizations.of(context)!.homeAchievementLevel10Description,
         'icon': Icons.star,
         'color': Colors.amber,
         'completed': true,
@@ -1549,8 +1631,8 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
     
     if (currentLevel >= 50) {
       newAchievements.add({
-        'title': 'レベル50達成',
-        'description': 'レベル50に到達しました',
+        'title': AppLocalizations.of(context)!.homeAchievementLevel50Title,
+        'description': AppLocalizations.of(context)!.homeAchievementLevel50Description,
         'icon': Icons.star,
         'color': Colors.orange,
         'completed': true,
@@ -1559,8 +1641,8 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
     
     if (currentLevel >= 100) {
       newAchievements.add({
-        'title': 'レベル100達成',
-        'description': 'レベル100に到達しました',
+        'title': AppLocalizations.of(context)!.homeAchievementLevel100Title,
+        'description': AppLocalizations.of(context)!.homeAchievementLevel100Description,
         'icon': Icons.star,
         'color': Colors.red,
         'completed': true,
@@ -1570,8 +1652,8 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
     // タップ数アチーブメント
     if (totalTaps >= 1000) {
       newAchievements.add({
-        'title': '1000タップ達成',
-        'description': '1000回タップしました',
+        'title': AppLocalizations.of(context)!.homeAchievement1000TapsTitle,
+        'description': AppLocalizations.of(context)!.homeAchievement1000TapsDescription,
         'icon': Icons.touch_app,
         'color': Colors.blue,
         'completed': true,
@@ -1580,8 +1662,8 @@ https://apps.apple.com/jp/developer/jin-mizoi/id1548623319''',
     
     if (totalTaps >= 10000) {
       newAchievements.add({
-        'title': '10000タップ達成',
-        'description': '10000回タップしました',
+        'title': AppLocalizations.of(context)!.homeAchievement10000TapsTitle,
+        'description': AppLocalizations.of(context)!.homeAchievement10000TapsDescription,
         'icon': Icons.touch_app,
         'color': Colors.green,
         'completed': true,

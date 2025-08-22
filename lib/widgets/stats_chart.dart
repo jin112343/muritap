@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/stats_service.dart';
 import '../config/theme_config.dart';
+import '../l10n/app_localizations.dart';
 
 /// 統計グラフウィジェット
 class StatsChart extends StatelessWidget {
@@ -24,7 +25,7 @@ class StatsChart extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         child: Center(
           child: Text(
-            'データがありません',
+            AppLocalizations.of(context)!.statsChartNoData,
             style: TextStyle(
               color: Colors.grey[400],
               fontSize: 16,
@@ -200,7 +201,7 @@ class StatsChart extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    '合計',
+                    AppLocalizations.of(context)!.statsChartTotal,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -208,7 +209,7 @@ class StatsChart extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    '${stats.map((s) => s.taps).reduce((a, b) => a + b)} タップ',
+                    '${stats.map((s) => s.taps).reduce((a, b) => a + b)} ${AppLocalizations.of(context)!.statsChartTaps}',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,

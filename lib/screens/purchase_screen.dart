@@ -3,6 +3,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'dart:developer' as developer;
 import '../services/purchase_service.dart';
 import '../config/theme_config.dart';
+import '../l10n/app_localizations.dart';
 
 class PurchaseScreen extends HookWidget {
   const PurchaseScreen({super.key});
@@ -14,7 +15,7 @@ class PurchaseScreen extends HookWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('課金商品'),
+        title: Text(AppLocalizations.of(context)!.purchaseTitle),
         backgroundColor: ThemeConfig.surfaceColor,
         foregroundColor: ThemeConfig.textColor,
       ),
@@ -188,25 +189,25 @@ class PurchaseScreen extends HookWidget {
                   Card(
                     child: ListTile(
                       leading: const Icon(Icons.restore, color: Colors.blue),
-                      title: const Text('購入履歴を復元'),
-                      subtitle: const Text('以前の購入を復元します'),
+                      title: Text(AppLocalizations.of(context)!.purchaseRestorePurchases),
+                      subtitle: Text(AppLocalizations.of(context)!.purchaseRestorePurchasesDescription),
                       onTap: () async {
                         isLoading.value = true;
                         try {
                           await PurchaseService.instance.restorePurchases();
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('購入履歴の復元を開始しました'),
-                                backgroundColor: Colors.blue,
-                              ),
+                                                          SnackBar(
+                              content: Text(AppLocalizations.of(context)!.purchaseRestoreStarted),
+                              backgroundColor: Colors.blue,
+                            ),
                             );
                           }
                         } catch (e) {
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('復元に失敗しました: $e'),
+                                content: Text(AppLocalizations.of(context)!.purchaseRestoreFailed),
                                 backgroundColor: Colors.red,
                               ),
                             );
@@ -261,7 +262,7 @@ class PurchaseScreen extends HookWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            PurchaseService.instance.getProductDisplayName(productId),
+                            PurchaseService.instance.getProductDisplayName(productId, context),
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -270,7 +271,7 @@ class PurchaseScreen extends HookWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            PurchaseService.instance.getProductDescription(productId),
+                            PurchaseService.instance.getProductDescription(productId, context),
                             style: TextStyle(
                               fontSize: 14,
                               color: Colors.grey[600],
@@ -296,38 +297,38 @@ class PurchaseScreen extends HookWidget {
                                   if (!isPurchased) ...[
                     const SizedBox(height: 16),
                     // 高額商品の場合は年齢制限の説明を追加
-                    if (productId == PurchaseService.tap1M || productId == PurchaseService.tap100M) ...[
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.orange.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.orange.withValues(alpha: 0.5)),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.info_outline,
-                              color: Colors.orange,
-                              size: 16,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                '20歳以上の方のみ購入可能',
-                                style: TextStyle(
-                                  color: Colors.orange,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                    ],
+                    // if (productId == PurchaseService.tap1M || productId == PurchaseService.tap100M) ...[
+                    //   Container(
+                    //     width: double.infinity,
+                    //     padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                    //     decoration: BoxDecoration(
+                    //       color: Colors.orange.withValues(alpha: 0.1),
+                    //       borderRadius: BorderRadius.circular(8),
+                    //       border: Border.all(color: Colors.orange.withValues(alpha: 0.5)),
+                    //     ),
+                    //     child: Row(
+                    //       children: [
+                    //         Icon(
+                    //           Icons.info_outline,
+                    //           color: Colors.orange,
+                    //           size: 16,
+                    //         ),
+                    //         const SizedBox(width: 8),
+                    //         Expanded(
+                    //           child: Text(
+                    //             '20歳以上の方のみ購入可能',
+                    //             style: TextStyle(
+                    //               color: Colors.orange,
+                    //               fontSize: 12,
+                    //               fontWeight: FontWeight.w500,
+                    //             ),
+                    //           ),
+                    //         ),
+                    //       ],
+                    //     ),
+                    //   ),
+                    //   const SizedBox(height: 8),
+                    // ],
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
@@ -339,7 +340,7 @@ class PurchaseScreen extends HookWidget {
                               _handlePurchaseWithAgeCheck(context, productId, isLoading, selectedProductId);
                             },
                         icon: const Icon(Icons.payment),
-                        label: const Text('購入する'),
+                        label: Text(AppLocalizations.of(context)!.purchaseButton),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: ThemeConfig.primaryColor,
                           foregroundColor: Colors.white,
@@ -362,7 +363,7 @@ class PurchaseScreen extends HookWidget {
                         const Icon(Icons.check_circle, color: Colors.green, size: 20),
                         const SizedBox(width: 8),
                         Text(
-                          '購入済み',
+                          AppLocalizations.of(context)!.purchasePurchased,
                           style: TextStyle(
                             color: Colors.green,
                             fontWeight: FontWeight.bold,
@@ -389,7 +390,7 @@ class PurchaseScreen extends HookWidget {
   ) async {
     developer.log('=== _handlePurchaseWithAgeCheck開始 ===');
     developer.log('商品ID: $productId');
-    developer.log('高額商品チェック: ${productId == PurchaseService.tap1M || productId == PurchaseService.tap100M}');
+    // developer.log('高額商品チェック: ${productId == PurchaseService.tap1M || productId == PurchaseService.tap100M}');
     
     // 高額商品（3万円以上）の場合は年齢確認を先に行う - 一時的に無効化
     // if (productId == PurchaseService.tap1M || productId == PurchaseService.tap100M) {
@@ -455,12 +456,12 @@ class PurchaseScreen extends HookWidget {
     developer.log('=== _purchaseProduct開始 ===');
     developer.log('呼び出し元のスタックトレース: ${StackTrace.current}');
     developer.log('商品ID: $productId');
-    developer.log('高額商品チェック: ${productId == PurchaseService.tap1M || productId == PurchaseService.tap100M}');
+    // developer.log('高額商品チェック: ${productId == PurchaseService.tap1M || productId == PurchaseService.tap100M}');
     
     // 年齢確認は_handlePurchaseWithAgeCheckで既に完了しているため、ここでは行わない
     developer.log('年齢確認は既に完了済みです');
     developer.log('商品ID: $productId');
-    developer.log('高額商品ID: ${PurchaseService.tap1M}, ${PurchaseService.tap100M}');
+    // developer.log('高額商品ID: ${PurchaseService.tap1M}, ${PurchaseService.tap100M}');
     
     isLoading.value = true;
     selectedProductId.value = productId;
@@ -481,14 +482,14 @@ class PurchaseScreen extends HookWidget {
         if (success) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('${PurchaseService.instance.getProductDisplayName(productId)}を購入しました！'),
+                              content: Text(AppLocalizations.of(context)!.purchaseSuccess(PurchaseService.instance.getProductDisplayName(productId, context))),
               backgroundColor: Colors.green,
             ),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('購入に失敗しました。しばらく時間をおいて再度お試しください。'),
+                        SnackBar(
+              content: Text(AppLocalizations.of(context)!.purchaseFailed),
               backgroundColor: Colors.red,
               duration: Duration(seconds: 5),
             ),
@@ -499,10 +500,10 @@ class PurchaseScreen extends HookWidget {
       developer.log('❌ 購入処理でエラーが発生: $e');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('購入処理でエラーが発生しました。しばらく時間をおいて再度お試しください。'),
-            backgroundColor: Colors.red,
-          ),
+                      SnackBar(
+              content: Text(AppLocalizations.of(context)!.purchaseError),
+              backgroundColor: Colors.red,
+            ),
         );
       }
     } finally {

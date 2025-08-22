@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 
 /// 称号管理サービス
 class TitleService {
@@ -6,16 +7,26 @@ class TitleService {
   TitleService._internal();
 
   /// レベルに応じた称号を取得
-  String getTitle(int level) {
-    if (level >= 1000) return "タップ神";
-    if (level >= 500) return "タップ仙人";
-    if (level >= 200) return "タップマスター";
-    if (level >= 100) return "タップ名人";
-    if (level >= 50) return "中級者";
-    if (level >= 20) return "初級者";
-    if (level >= 10) return "初心者";
-    if (level >= 5) return "見習い";
-    return "新米";
+  String getTitle(int level, BuildContext context, {
+    String? titleGod,
+    String? titleSage,
+    String? titleMaster,
+    String? titleExpert,
+    String? titleIntermediate,
+    String? titleBeginner,
+    String? titleNovice,
+    String? titleApprentice,
+    String? titleNewbie,
+  }) {
+    if (level >= 1000) return titleGod ?? AppLocalizations.of(context)!.titleGod;
+    if (level >= 500) return titleSage ?? AppLocalizations.of(context)!.titleSage;
+    if (level >= 200) return titleMaster ?? AppLocalizations.of(context)!.titleMaster;
+    if (level >= 100) return titleExpert ?? AppLocalizations.of(context)!.titleExpert;
+    if (level >= 50) return titleIntermediate ?? AppLocalizations.of(context)!.titleIntermediate;
+    if (level >= 20) return titleBeginner ?? AppLocalizations.of(context)!.titleBeginner;
+    if (level >= 10) return titleNovice ?? AppLocalizations.of(context)!.titleNovice;
+    if (level >= 5) return titleApprentice ?? AppLocalizations.of(context)!.titleApprentice;
+    return titleNewbie ?? AppLocalizations.of(context)!.titleNewbie;
   }
 
   /// 称号の色を取得

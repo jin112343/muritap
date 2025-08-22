@@ -2,6 +2,7 @@ import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
+import '../l10n/app_localizations.dart';
 
 /// 課金管理サービス
 class PurchaseService {
@@ -28,12 +29,12 @@ class PurchaseService {
   static final String tap1000 = Platform.isIOS 
     ? 'com.impossibletap.tap1000' 
     : 'android.test.refunded';
-  static final String tap1M = Platform.isIOS 
-    ? 'com.impossibletap.tap1m' 
-    : 'android.test.tap1m';
-  static final String tap100M = Platform.isIOS 
-    ? 'com.impossibletap.tap100m' 
-    : 'android.test.tap100m';
+  // static final String tap1M = Platform.isIOS 
+  //   ? 'com.impossibletap.tap1m' 
+  //   : 'android.test.tap1m';
+  // static final String tap100M = Platform.isIOS 
+  //   ? 'com.impossibletap.tap100m' 
+  //   : 'android.test.tap100m';
 
   /// 課金サービスを初期化
   Future<void> initialize() async {
@@ -112,8 +113,8 @@ class PurchaseService {
       tap10,
       tap100,
       tap1000,
-      tap1M,
-      tap100M,
+      // tap1M, // コメントアウト
+      // tap100M, // コメントアウト
     };
 
     print('商品読み込み開始: $productIds');
@@ -123,21 +124,52 @@ class PurchaseService {
       
       if (response.notFoundIDs.isNotEmpty) {
         print('見つからない商品ID: ${response.notFoundIDs}');
+        print('⚠️ 見つからない商品の詳細:');
+        for (final missingId in response.notFoundIDs) {
+          print('  - $missingId');
+          if (missingId == removeAds) {
+            print('    → 広告削除商品がApp Store Connectで設定されていない可能性があります');
+          } else if (missingId == tap10) {
+            print('    → タップ10商品がApp Store Connectで設定されていない可能性があります');
+          } else if (missingId == tap100) {
+            print('    → タップ100商品がApp Store Connectで設定されていない可能性があります');
+          } else if (missingId == tap1000) {
+            print('    → タップ1000商品がApp Store Connectで設定されていない可能性があります');
+          }
+        }
       }
 
       if (response.error != null) {
         print('商品読み込みエラー: ${response.error}');
+        print('エラー詳細: ${response.error!.message}');
+        print('エラーコード: ${response.error!.code}');
       }
 
       _products.clear();
       _products.addAll(response.productDetails);
       print('読み込み完了商品数: ${_products.length}');
       
-      for (final product in _products) {
-        print('商品: ${product.id} - ${product.title} - ${product.price}');
+      if (_products.isNotEmpty) {
+        print('✅ 正常に読み込まれた商品:');
+        for (final product in _products) {
+          print('  - ${product.id} - ${product.title} - ${product.price}');
+        }
+      } else {
+        print('❌ 商品が1つも読み込まれませんでした');
       }
+      
+      // 商品の種類別の確認
+      print('商品種類別確認:');
+      print('  - 広告削除: ${_products.any((p) => p.id == removeAds) ? "✅" : "❌"}');
+      print('  - タップ10: ${_products.any((p) => p.id == tap10) ? "✅" : "❌"}');
+      print('  - タップ100: ${_products.any((p) => p.id == tap100) ? "✅" : "❌"}');
+      print('  - タップ1000: ${_products.any((p) => p.id == tap1000) ? "✅" : "❌"}');
+      // print('  - タップ1M: ${_products.any((p) => p.id == tap1M) ? "✅" : "❌"}'); // コメントアウト
+      // print('  - タップ100M: ${_products.any((p) => p.id == tap100M) ? "✅" : "❌"}'); // コメントアウト
+      
     } catch (e) {
       print('商品読み込み例外: $e');
+      print('例外の詳細: ${e.toString()}');
     }
   }
 
@@ -196,16 +228,17 @@ class PurchaseService {
           print('❌ タップ倍率商品購入エラー: $e');
           success = false;
         }
-      } else if (product.id == tap1M || product.id == tap100M) {
-        print('🛒 高額タップ倍率商品の購入処理を開始（消費型）: ${product.id}');
-        try {
-          success = await _inAppPurchase.buyConsumable(purchaseParam: purchaseParam);
-          print('高額タップ倍率商品購入結果: $success');
-        } catch (e) {
-          print('❌ 高額タップ倍率商品購入エラー: $e');
-          success = false;
-        }
       }
+      // else if (product.id == tap1M || product.id == tap100M) {
+      //   print('🛒 高額タップ倍率商品の購入処理を開始（消費型）: ${product.id}');
+      //   try {
+      //     success = await _inAppPurchase.buyConsumable(purchaseParam: purchaseParam);
+      //     print('高額タップ倍率商品購入結果: $success');
+      //   } catch (e) {
+      //     print('❌ 高額タップ倍率商品購入エラー: $e');
+      //     success = false;
+      //   }
+      // }
 
       if (success) {
         print('✅ 購入リクエスト送信成功: ${product.id}');
@@ -354,7 +387,7 @@ class PurchaseService {
     print('購入状態をクリア: $productId');
   }
 
-  /// タップ倍率を取得（複数購入時は合計値）
+  /// タップ倍率を取得
   Future<int> getTapMultiplier() async {
     int multiplier = 1;
     
@@ -362,8 +395,8 @@ class PurchaseService {
     if (await isProductPurchased(tap10)) multiplier += 10;
     if (await isProductPurchased(tap100)) multiplier += 100;
     if (await isProductPurchased(tap1000)) multiplier += 1000;
-    if (await isProductPurchased(tap1M)) multiplier += 1000000; // 100万
-    if (await isProductPurchased(tap100M)) multiplier += 100000000; // 1億
+    // if (await isProductPurchased(tap1M)) multiplier += 1000000; // 100万 - コメントアウト
+    // if (await isProductPurchased(tap100M)) multiplier += 100000000; // 1億 - コメントアウト
     
     return multiplier;
   }
@@ -379,26 +412,36 @@ class PurchaseService {
   }
 
   /// 商品の表示名を取得
-  String getProductDisplayName(String productId) {
+  String getProductDisplayName(String productId, BuildContext context, {
+    String? productRemoveAds,
+    String? productTap10,
+    String? productTap100,
+    String? productTap1000,
+    // String? productTap1M, // コメントアウト
+    // String? productTap100M, // コメントアウト
+    String? productUnknown,
+  }) {
     if (productId == removeAds) {
-      return 'バナー広告削除';
+      return productRemoveAds ?? AppLocalizations.of(context)!.purchaseRemoveAds;
     } else if (productId == tap10) {
-      return '1タップ10回';
+      return productTap10 ?? AppLocalizations.of(context)!.purchaseTap10;
     } else if (productId == tap100) {
-      return '1タップ100回';
+      return productTap100 ?? AppLocalizations.of(context)!.purchaseTap100;
     } else if (productId == tap1000) {
-      return '1タップ1000回';
-    } else if (productId == tap1M) {
-      return '1タップ100万回';
-    } else if (productId == tap100M) {
-      return '1タップ1億回';
-    } else {
-      return '不明な商品';
+      return productTap1000 ?? AppLocalizations.of(context)!.purchaseTap1000;
+    }
+    // else if (productId == tap1M) {
+    //   return productTap1M ?? '1タップ100万回';
+    // } else if (productId == tap100M) {
+    //   return productTap100M ?? '1タップ1億回';
+    // }
+    else {
+      return productUnknown ?? '不明な商品';
     }
   }
 
   /// 商品の価格を取得（実際の商品情報から）
-  String getProductPrice(String productId) {
+  String getProductPrice(String productId, {String? priceUnknown}) {
     final productDetails = getProductDetails(productId);
     if (productDetails != null) {
       return productDetails.price;
@@ -413,31 +456,43 @@ class PurchaseService {
       return '300円';
     } else if (productId == tap1000) {
       return '1,000円'; // 3,000円から1,000円に変更して価値を向上
-    } else if (productId == tap1M) {
-      return '30,000円';
-    } else if (productId == tap100M) {
-      return '150,000円';
-    } else {
-      return '価格不明';
+    }
+    // else if (productId == tap1M) {
+    //   return '30,000円';
+    // } else if (productId == tap100M) {
+    //   return '150,000円';
+    // }
+    else {
+      return priceUnknown ?? '価格不明';
     }
   }
 
   /// 商品の説明を取得
-  String getProductDescription(String productId) {
+  String getProductDescription(String productId, BuildContext context, {
+    String? descriptionRemoveAds,
+    String? descriptionTap10,
+    String? descriptionTap100,
+    String? descriptionTap1000,
+    // String? descriptionTap1M, // コメントアウト
+    // String? descriptionTap100M, // コメントアウト
+    String? descriptionUnknown,
+  }) {
     if (productId == removeAds) {
-      return 'バナー広告のみを非表示にします。\n（動画広告は引き続き利用可能）';
+      return descriptionRemoveAds ?? AppLocalizations.of(context)!.purchaseRemoveAdsDescription;
     } else if (productId == tap10) {
-      return '1回のタップで10回分の効果を獲得\n※永久に加算されます';
+      return descriptionTap10 ?? AppLocalizations.of(context)!.purchaseTap10Description;
     } else if (productId == tap100) {
-      return '1回のタップで100回分の効果を獲得\n※永久に加算されます';
+      return descriptionTap100 ?? AppLocalizations.of(context)!.purchaseTap100Description;
     } else if (productId == tap1000) {
-      return '1回のタップで1000回分の効果を獲得\n※永久に加算されます';
-    } else if (productId == tap1M) {
-      return '1回のタップで100万回分の効果を獲得\n※永久に加算されます';
-    } else if (productId == tap100M) {
-      return '1回のタップで1億回分の効果を獲得\n※永久に加算されます';
-    } else {
-      return '効果不明';
+      return descriptionTap1000 ?? AppLocalizations.of(context)!.purchaseTap1000Description;
+    }
+    // else if (productId == tap1M) {
+    //   return descriptionTap1M ?? '1回のタップで100万回分の効果を獲得\n※永久に加算されます';
+    // } else if (productId == tap100M) {
+    //   return descriptionTap100M ?? '1回のタップで1億回分の効果を獲得\n※永久に加算されます';
+    // }
+    else {
+      return descriptionUnknown ?? '効果不明';
     }
   }
 
@@ -451,11 +506,13 @@ class PurchaseService {
       return Icons.bolt;
     } else if (productId == tap1000) {
       return Icons.electric_bolt;
-    } else if (productId == tap1M) {
-      return Icons.thunderstorm;
-    } else if (productId == tap100M) {
-      return Icons.rocket_launch;
-    } else {
+    }
+    // else if (productId == tap1M) {
+    //   return Icons.thunderstorm;
+    // } else if (productId == tap100M) {
+    //   return Icons.rocket_launch;
+    // }
+    else {
       return Icons.shopping_cart;
     }
   }
@@ -470,11 +527,13 @@ class PurchaseService {
       return Colors.orange;
     } else if (productId == tap1000) {
       return Colors.red;
-    } else if (productId == tap1M) {
-      return Colors.purple;
-    } else if (productId == tap100M) {
-      return Colors.indigo;
-    } else {
+    }
+    // else if (productId == tap1M) {
+    //   return Colors.purple;
+    // } else if (productId == tap100M) {
+    //   return Colors.indigo;
+    // }
+    else {
       return Colors.grey;
     }
   }
@@ -485,7 +544,12 @@ class PurchaseService {
   }
 
   /// 高額商品購入時の年齢確認ダイアログを表示
-  Future<bool> showAgeVerificationDialog(BuildContext context) async {
+  Future<bool> showAgeVerificationDialog(BuildContext context, {
+    String? title,
+    String? content,
+    String? yesText,
+    String? noText,
+  }) async {
     print('年齢確認ダイアログ表示開始');
     
     final result = await showDialog<bool>(
@@ -493,16 +557,16 @@ class PurchaseService {
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text(
-            'あなたの年齢選択',
-            style: TextStyle(
+          title: Text(
+            title ?? 'あなたの年齢選択',
+            style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
           ),
-          content: const Text(
-            'あそんでいる年齢（ねんれい）によって買（か）える金額（きんがく）がきまっています。\n\n20歳以上ですか？',
-            style: TextStyle(fontSize: 16),
+          content: Text(
+            content ?? 'あそんでいる年齢（ねんれい）によって買（か）える金額（きんがく）がきまっています。\n\n20歳以上ですか？',
+            style: const TextStyle(fontSize: 16),
           ),
           actions: [
             TextButton(
@@ -510,9 +574,9 @@ class PurchaseService {
                 print('「いいえ」ボタンが押されました');
                 Navigator.of(context).pop(false);
               },
-              child: const Text(
-                'いいえ',
-                style: TextStyle(
+              child: Text(
+                noText ?? 'いいえ',
+                style: const TextStyle(
                   fontSize: 16,
                   color: Colors.red,
                 ),
@@ -527,9 +591,9 @@ class PurchaseService {
                 backgroundColor: Colors.blue,
                 foregroundColor: Colors.white,
               ),
-              child: const Text(
-                'はい',
-                style: TextStyle(fontSize: 16),
+              child: Text(
+                yesText ?? 'はい',
+                style: const TextStyle(fontSize: 16),
               ),
             ),
           ],

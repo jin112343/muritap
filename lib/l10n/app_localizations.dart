@@ -1718,6 +1718,18 @@ abstract class AppLocalizations {
   /// **'Share screenshot'**
   String get rankingShareTooltip;
 
+  /// No description provided for @rankingViewInPlayGames.
+  ///
+  /// In en, this message translates to:
+  /// **'View in Play Games'**
+  String get rankingViewInPlayGames;
+
+  /// No description provided for @rankingSignInToPlayGames.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign In to Play Games'**
+  String get rankingSignInToPlayGames;
+
   /// No description provided for @titleDisplayRemainingTaps.
   ///
   /// In en, this message translates to:

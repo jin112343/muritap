@@ -883,6 +883,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get rankingShareTooltip => 'Share screenshot';
 
   @override
+  String get rankingViewInPlayGames => 'View in Play Games';
+
+  @override
+  String get rankingSignInToPlayGames => 'Sign In to Play Games';
+
+  @override
   String titleDisplayRemainingTaps(Object remaining, Object title) {
     return '$remaining more taps to $title';
   }

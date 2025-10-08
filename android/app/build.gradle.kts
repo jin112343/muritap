@@ -60,6 +60,8 @@ android {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+    // Play Games Services v2
+    implementation("com.google.android.gms:play-services-games-v2:20.1.2")
 }
 
 flutter {

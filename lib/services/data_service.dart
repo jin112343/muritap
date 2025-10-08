@@ -235,8 +235,8 @@ class DataService {
       final progress = (level - 750) / (999 - 750);
       growthRate = 1.8 + (progress * 0.1);
     } else {
-      // レベル999以降は2.0で固定
-      growthRate = 2.0;
+      // レベル999以降は1.9で固定（適切な成長率に調整）
+      growthRate = 1.9;
     }
     
     return (AppConfig.baseTaps * pow(level, growthRate)).floor();

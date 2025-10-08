@@ -17,12 +17,19 @@ class TapButton extends StatelessWidget {
 
     @override
   Widget build(BuildContext context) {
+    // 画面サイズを取得
+    final screenSize = MediaQuery.of(context).size;
+    final isTablet = screenSize.shortestSide >= 600; // iPadなどのタブレット判定
+
+    // ボタンサイズを画面サイズに応じて調整
+    final buttonSize = isTablet ? 300.0 : 200.0; // iPadでは1.5倍に拡大
+
     return Center(
       child: AnimatedBuilder(
         animation: animationController,
         builder: (context, child) {
           final scale = 1.0 + (animationController.value * 0.1);
-          
+
           return Transform.scale(
             scale: scale,
             child: GestureDetector(
@@ -31,11 +38,11 @@ class TapButton extends StatelessWidget {
                 children: [
                   // ベース層（濃い灰色）
                   Container(
-                    width: 200,
-                    height: 200,
+                    width: buttonSize,
+                    height: buttonSize,
                     decoration: BoxDecoration(
                       color: const Color(0xFF2C2C2C),
-                      borderRadius: BorderRadius.circular(100),
+                      borderRadius: BorderRadius.circular(buttonSize / 2),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withValues(alpha: 0.4),
@@ -48,11 +55,11 @@ class TapButton extends StatelessWidget {
                   ),
                   // 中間層（黒）
                   Container(
-                    width: 200,
-                    height: 200,
+                    width: buttonSize,
+                    height: buttonSize,
                     decoration: BoxDecoration(
                       color: Colors.black,
-                      borderRadius: BorderRadius.circular(100),
+                      borderRadius: BorderRadius.circular(buttonSize / 2),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withValues(alpha: 0.3),
@@ -65,11 +72,11 @@ class TapButton extends StatelessWidget {
                   ),
                   // メインボタン（オレンジ）- 処理中は色を変更
                   Container(
-                    width: 200,
-                    height: 200,
+                    width: buttonSize,
+                    height: buttonSize,
                     decoration: BoxDecoration(
                       color: isProcessing ? Colors.grey : ThemeConfig.primaryColor,
-                      borderRadius: BorderRadius.circular(100),
+                      borderRadius: BorderRadius.circular(buttonSize / 2),
                       boxShadow: [
                         BoxShadow(
                           color: (isProcessing ? Colors.grey : ThemeConfig.primaryColor).withValues(alpha: 0.4),
@@ -90,9 +97,9 @@ class TapButton extends StatelessWidget {
                         children: [
                           if (isProcessing)
                             // 処理中はローディングアイコンのみ
-                            const SizedBox(
-                              width: 40,
-                              height: 40,
+                            SizedBox(
+                              width: isTablet ? 60.0 : 40.0, // iPadでは1.5倍に拡大
+                              height: isTablet ? 60.0 : 40.0,
                               child: CircularProgressIndicator(
                                 strokeWidth: 4,
                                 valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
@@ -100,9 +107,9 @@ class TapButton extends StatelessWidget {
                             )
                           else
                             // 通常時はタップアイコン
-                            const Icon(
+                            Icon(
                               Icons.touch_app,
-                              size: 60,
+                              size: isTablet ? 90.0 : 60.0, // iPadでは1.5倍に拡大
                               color: Colors.white,
                               shadows: [
                                 Shadow(
@@ -116,7 +123,7 @@ class TapButton extends StatelessWidget {
                           Text(
                             'Tap',
                             style: TextStyle(
-                              fontSize: 24,
+                              fontSize: isTablet ? 36.0 : 24.0, // iPadでは1.5倍に拡大
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
                               shadows: [

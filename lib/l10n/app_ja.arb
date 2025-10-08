@@ -312,6 +312,8 @@
   "rankingAbout": "ランキングについて",
   "rankingAboutDescription": "• 累積タップ数がランキングに反映されます\n• レベルアップ時に自動でスコアが送信されます\n• 手動でも「タップ回数を送信」で送信できます\n• アプリ内でランキングが自動表示されます\n• 「GameCenterで見る」で標準のGameCenter画面も利用可能",
   "rankingShareTooltip": "スクリーンショットを共有",
+  "rankingViewInPlayGames": "Play Gamesで見る",
+  "rankingSignInToPlayGames": "Play Gamesにサインイン",
   
   "titleDisplayRemainingTaps": "{title}まで残り{remaining}タップ",
   "titleDisplayNextTitle": "次の称号",

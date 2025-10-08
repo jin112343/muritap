@@ -6,6 +6,7 @@ import 'dart:developer' as developer;
 
 import '../config/theme_config.dart';
 import '../services/game_center_service.dart';
+import '../services/play_games_service.dart';
 import '../services/data_service.dart';
 import '../services/share_service.dart';
 import '../services/ad_service.dart'; // AdServiceを追加
@@ -291,35 +292,103 @@ class RankingScreen extends HookWidget {
                   ),
                   
 
-                ] else ...[
-                  // Android用のメッセージ
-                  Card(
-                    color: Colors.grey[100],
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        children: [
-                          const Icon(
-                            Icons.info_outline,
-                            size: 48,
-                            color: Colors.grey,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            AppLocalizations.of(context)!.rankingGameCenterIosOnly,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            AppLocalizations.of(context)!.rankingGameCenterDescription,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(fontSize: 14),
-                          ),
-                        ],
-                      ),
+                ] else if (Platform.isAndroid) ...[
+                  // Android用のPlay Gamesボタン
+                  ElevatedButton.icon(
+                    onPressed: isLoading.value ? null : () async {
+                      if (!isSignedIn.value) {
+                        isLoading.value = true;
+                        try {
+                          final success = await PlayGamesService.instance.signIn();
+                          isSignedIn.value = success;
+                        } catch (e) {
+                          developer.log('Play Games sign in error: $e');
+                        } finally {
+                          isLoading.value = false;
+                        }
+                      }
+
+                      if (isSignedIn.value) {
+                        await PlayGamesService.instance.showLeaderboard();
+                      }
+                    },
+                    icon: isLoading.value
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.leaderboard),
+                    label: Text(
+                      isLoading.value
+                        ? AppLocalizations.of(context)!.rankingLoading
+                        : (isSignedIn.value ? AppLocalizations.of(context)!.rankingViewInPlayGames : AppLocalizations.of(context)!.rankingSignInToPlayGames),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ThemeConfig.primaryColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.all(16),
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  ElevatedButton.icon(
+                    onPressed: isLoading.value ? null : () async {
+                      if (!isSignedIn.value) {
+                        isLoading.value = true;
+                        try {
+                          final success = await PlayGamesService.instance.signIn();
+                          isSignedIn.value = success;
+                        } catch (e) {
+                          developer.log('Play Games sign in error: $e');
+                        } finally {
+                          isLoading.value = false;
+                        }
+                      }
+
+                      if (isSignedIn.value) {
+                        final scoreToSubmit = DataService.instance.getTotalTaps();
+                        final success = await PlayGamesService.instance.submitScore(scoreToSubmit);
+                        if (success) {
+                          lastSubmittedScore.value = scoreToSubmit;
+
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(AppLocalizations.of(context)!.dialogsScoreSubmitSuccess(scoreToSubmit.toString())),
+                                backgroundColor: ThemeConfig.successColor,
+                              ),
+                            );
+                          }
+                        } else {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(AppLocalizations.of(context)!.dialogsScoreSubmitFailed),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        }
+                      }
+                    },
+                    icon: isLoading.value
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.upload),
+                    label: Text(
+                      isLoading.value
+                        ? AppLocalizations.of(context)!.rankingUploading
+                        : AppLocalizations.of(context)!.rankingSubmitTaps,
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ThemeConfig.accentColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.all(16),
                     ),
                   ),
                 ],

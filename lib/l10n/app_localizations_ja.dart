@@ -859,6 +859,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get rankingShareTooltip => 'スクリーンショットを共有';
 
   @override
+  String get rankingViewInPlayGames => 'Play Gamesで見る';
+
+  @override
+  String get rankingSignInToPlayGames => 'Play Gamesにサインイン';
+
+  @override
   String titleDisplayRemainingTaps(Object remaining, Object title) {
     return '$titleまで残り$remainingタップ';
   }

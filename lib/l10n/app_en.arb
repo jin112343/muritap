@@ -305,6 +305,8 @@
   "rankingAbout": "About Ranking",
   "rankingAboutDescription": "• Total tap count is reflected in ranking\n• Score is automatically submitted when leveling up\n• You can also manually submit via \"Submit Tap Count\"\n• Ranking is automatically displayed in-app\n• \"View in GameCenter\" provides access to standard GameCenter screen",
   "rankingShareTooltip": "Share screenshot",
+  "rankingViewInPlayGames": "View in Play Games",
+  "rankingSignInToPlayGames": "Sign In to Play Games",
   
   "titleDisplayRemainingTaps": "{remaining} more taps to {title}",
   "titleDisplayNextTitle": "Next Title",

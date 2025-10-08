@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Play Games Services Project ID -->
+    <!-- Google Play Consoleで取得したゲームプロジェクトIDに置き換えてください -->
+    <string name="game_services_project_id">YOUR_GAME_PROJECT_ID</string>
+</resources>
